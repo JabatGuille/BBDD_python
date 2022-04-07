@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS `Usuarios` (
 --
 
 INSERT INTO `Usuarios` (`usuario`, `clave`, `permisos`, `departamento`) VALUES
-('Admin', 'Admin', 'Admin', 'Jefe');
+('Admin', '88362c80f2ac5ba94bb93ded68608147c9656e340672d37b86f219c6', 'Admin', 'Jefe');
 
 -- --------------------------------------------------------
 
