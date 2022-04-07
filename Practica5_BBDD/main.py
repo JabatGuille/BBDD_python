@@ -14,6 +14,7 @@ from os import remove
 import random
 import csv
 import os
+import hashlib
 
 usuario_logueado = Usuario("", "", "", "")
 usuarios = {}
@@ -288,7 +289,8 @@ def comprobar_csv():
             fieldnames = ['usuario', 'clave', 'permisos', 'departamento']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerow({'usuario': 'Admin', 'clave': 'Admin', 'permisos': 'Admin', 'departamento': 'Jefe'})
+            writer.writerow({'usuario': 'Admin', 'clave': hashlib.sha224('Admin'.encode('utf-8')).hexdigest(), 'permisos': 'Admin',
+                             'departamento': 'Jefe'})
             writer.writerow({'usuario': 'Jefe', 'clave': 'Jefe', 'permisos': 'Jefe', 'departamento': 'Jefe'})
             writer.writerow(
                 {'usuario': 'Compras', 'clave': 'Compras', 'permisos': 'Empleado', 'departamento': 'Compras'})
@@ -1319,7 +1321,6 @@ def bucle_graficos(nombre, arrays):
             print("EL nombre del grafico no puede estar vacio")
     plt.savefig("Graficos/" + nombre + "/ " + nombre_grafico + ".pdf")
     plt.show()
-
 
 comprobar_csv()
 menu_login()
