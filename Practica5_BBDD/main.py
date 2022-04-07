@@ -1,3 +1,13 @@
+import csv
+import hashlib
+import os
+import random
+import pymysql
+from os import path
+from os import remove
+
+import matplotlib.pyplot as plt
+
 from Clases.Compras import Compras
 from Clases.Empresa import Empresa
 from Clases.MateriaPrima import MateriaPrima
@@ -6,15 +16,8 @@ from Clases.Produccion import Produccion
 from Clases.Usuario import Usuario
 from Clases.Ventas import Ventas
 from Enum.Departamentos import Departamentos
-from Enum.Permisos import Permisos
 from Enum.Estado import Estado
-import matplotlib.pyplot as plt
-from os import path
-from os import remove
-import random
-import csv
-import os
-import hashlib
+from Enum.Permisos import Permisos
 
 usuario_logueado = Usuario("", "", "", "")
 usuarios = {}
@@ -269,6 +272,11 @@ def lector_ficheros(rutas_unitarias, rutas_parecidas):
 
 # Comprobar_csv sirve para poder comprobar que existan los ficheros necesarios o si no crearlos
 def comprobar_csv():
+    if not os.path.exists('Ficheros/Relaciones'):
+        os.mkdir('Ficheros')
+        os.mkdir('Ficheros/Relaciones')
+    if not os.path.exists('Graficos'):
+        os.mkdir('Graficos')
     rutas_unitarias = ["./Ficheros/usuarios.csv", "./Ficheros/produccion.csv", "./Ficheros/empresas.csv"]
     rutas_parecidas = ["./Ficheros/materia_prima.csv", "./Ficheros/objetos.csv", "./Ficheros/compras.csv",
                        "./Ficheros/ventas.csv"]
@@ -289,8 +297,9 @@ def comprobar_csv():
             fieldnames = ['usuario', 'clave', 'permisos', 'departamento']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerow({'usuario': 'Admin', 'clave': hashlib.sha224('Admin'.encode('utf-8')).hexdigest(), 'permisos': 'Admin',
-                             'departamento': 'Jefe'})
+            writer.writerow(
+                {'usuario': 'Admin', 'clave': hashlib.sha224('Admin'.encode('utf-8')).hexdigest(), 'permisos': 'Admin',
+                 'departamento': 'Jefe'})
             writer.writerow({'usuario': 'Jefe', 'clave': 'Jefe', 'permisos': 'Jefe', 'departamento': 'Jefe'})
             writer.writerow(
                 {'usuario': 'Compras', 'clave': 'Compras', 'permisos': 'Empleado', 'departamento': 'Compras'})
@@ -1321,6 +1330,12 @@ def bucle_graficos(nombre, arrays):
             print("EL nombre del grafico no puede estar vacio")
     plt.savefig("Graficos/" + nombre + "/ " + nombre_grafico + ".pdf")
     plt.show()
+
+
+def conexion():
+    db = pymysql.connect(host="127.0.0.1", user='root', password='root', db='python', port=3306)
+    db.close()
+
 
 comprobar_csv()
 menu_login()
