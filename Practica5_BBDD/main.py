@@ -166,209 +166,6 @@ def registro():
                     bol_menu = False
 
 
-# Lector_ficheros sirve para poder leer los ficheros.csv y cargar los datos en memoria
-def lector_ficheros(rutas_unitarias, rutas_parecidas):
-    rutas_relacionadas = ["./Ficheros/Relaciones/compras_empresas.csv", "./Ficheros/Relaciones/ventas_empresas.csv",
-                          "./Ficheros/Relaciones/objetos_materiaprima.csv"]
-    with open(rutas_unitarias[0]) as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            usuarios[row['usuario']] = Usuario(row['usuario'], row['clave'], row['permisos'], row['departamento'])
-    with open(rutas_unitarias[2]) as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            empresas[row['empresa']] = Empresa(row['empresa'])
-    with open(rutas_parecidas[0]) as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            materia_prima[int(row['id'])] = MateriaPrima(int(row['id']), row['nombre'], row['descripcion'])
-    with open(rutas_parecidas[1]) as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            objetos[int(row['id'])] = Objeto(int(row['id']), row['nombre'], row['descripcion'])
-    with open(rutas_parecidas[2]) as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            compras[int(row['id'])] = Compras(int(row['id']), row['descripcion'], row['estado'])
-    with open(rutas_parecidas[3]) as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            ventas[int(row['id'])] = Ventas(int(row['id']), row['descripcion'], row['estado'])
-    with open(rutas_unitarias[1]) as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            produccion[int(row['id'])] = Produccion(int(row['id']), row['descripcion'], row['cantidad'],
-                                                    objetos[int(row['objeto'])])
-    try:
-        with open(rutas_relacionadas[0], 'r') as f:
-            if os.stat(rutas_relacionadas[0]).st_size == 0:
-                bol_fichero = True
-            else:
-                bol_fichero = False
-    except FileNotFoundError as e:
-        bol_fichero = True
-    except IOError as e:
-        bol_fichero = True
-    if bol_fichero:
-        archivo = open(rutas_relacionadas[0], 'w')
-        archivo.close()
-        with open(rutas_relacionadas[0], 'r+') as csvfile:
-            fieldnames = ['compras_id', 'empresa']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-    else:
-        with open(rutas_relacionadas[0]) as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                compras[int(row['compra_id'])].ayadir_comprador(empresas[row['empresa']])
-                empresas[row['empresa']].ayadir_compras(compras[int(row['compra_id'])])
-    try:
-        with open(rutas_relacionadas[1], 'r') as f:
-            if os.stat(rutas_relacionadas[1]).st_size == 0:
-                bol_fichero = True
-            else:
-                bol_fichero = False
-    except FileNotFoundError as e:
-        bol_fichero = True
-    except IOError as e:
-        bol_fichero = True
-    if bol_fichero:
-        archivo = open(rutas_relacionadas[1], 'w')
-        archivo.close()
-        with open(rutas_relacionadas[1], 'r+') as csvfile:
-            fieldnames = ['ventas_id', 'empresa']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-    else:
-        with open(rutas_relacionadas[1]) as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                ventas[int(row['ventas_id'])].ayadir_comprador(empresas[row['empresa']])
-                empresas[row['empresa']].ayadir_ventas(ventas[int(row['ventas_id'])])
-    try:
-        with open(rutas_relacionadas[2], 'r') as f:
-            if os.stat(rutas_relacionadas[2]).st_size == 0:
-                bol_fichero = True
-            else:
-                bol_fichero = False
-    except FileNotFoundError as e:
-        bol_fichero = True
-    except IOError as e:
-        bol_fichero = True
-    if bol_fichero:
-        archivo = open(rutas_relacionadas[2], 'w')
-        archivo.close()
-        with open(rutas_relacionadas[2], 'r+') as csvfile:
-            fieldnames = ['objetos_id', 'materiaprima_id']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-    else:
-        with open(rutas_relacionadas[2]) as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                objetos[int(row['objetos_id'])].ayadir_materia_prima(materia_prima[int(row['materiaprima_id'])])
-                materia_prima[int(row['materiaprima_id'])].ayadir_objeto(objetos[int(row['objetos_id'])])
-
-
-# Comprobar_csv sirve para poder comprobar que existan los ficheros necesarios o si no crearlos
-def comprobar_csv():
-    if not os.path.exists('Ficheros/Relaciones'):
-        os.mkdir('Ficheros')
-        os.mkdir('Ficheros/Relaciones')
-    if not os.path.exists('Graficos'):
-        os.mkdir('Graficos')
-    rutas_unitarias = ["./Ficheros/usuarios.csv", "./Ficheros/produccion.csv", "./Ficheros/empresas.csv"]
-    rutas_parecidas = ["./Ficheros/materia_prima.csv", "./Ficheros/objetos.csv", "./Ficheros/compras.csv",
-                       "./Ficheros/ventas.csv"]
-    try:
-        with open(rutas_unitarias[0], 'r') as f:
-            if os.stat(rutas_unitarias[0]).st_size == 0:
-                bol_fichero = True
-            else:
-                bol_fichero = False
-    except FileNotFoundError as e:
-        bol_fichero = True
-    except IOError as e:
-        bol_fichero = True
-    if bol_fichero:
-        archivo = open(rutas_unitarias[0], 'w')
-        archivo.close()
-        with open(rutas_unitarias[0], 'r+') as csvfile:
-            fieldnames = ['usuario', 'clave', 'permisos', 'departamento']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerow(
-                {'usuario': 'Admin', 'clave': hashlib.sha224('Admin'.encode('utf-8')).hexdigest(), 'permisos': 'Admin',
-                 'departamento': 'Jefe'})
-            writer.writerow({'usuario': 'Jefe', 'clave': 'Jefe', 'permisos': 'Jefe', 'departamento': 'Jefe'})
-            writer.writerow(
-                {'usuario': 'Compras', 'clave': 'Compras', 'permisos': 'Empleado', 'departamento': 'Compras'})
-            writer.writerow({'usuario': 'Ventas', 'clave': 'Ventas', 'permisos': 'Empleado', 'departamento': 'Ventas'})
-            writer.writerow(
-                {'usuario': 'Produccion', 'clave': 'Produccion', 'permisos': 'Empleado', 'departamento': 'Produccion'})
-            writer.writerow({'usuario': 'RRHH', 'clave': 'RRHH', 'permisos': 'Empleado', 'departamento': 'RRHH'})
-
-    try:
-        with open(rutas_unitarias[1], 'r') as f:
-            if os.stat(rutas_unitarias[1]).st_size == 0:
-                bol_fichero = True
-            else:
-                bol_fichero = False
-    except FileNotFoundError as e:
-        bol_fichero = True
-    except IOError as e:
-        bol_fichero = True
-    if bol_fichero:
-        archivo = open(rutas_unitarias[1], 'w')
-        archivo.close()
-        with open(rutas_unitarias[1], 'r+') as csvfile:
-            fieldnames = ['id', 'descripcion', 'cantidad', 'objeto']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-    try:
-        with open(rutas_unitarias[2], 'r') as f:
-            if os.stat(rutas_unitarias[2]).st_size == 0:
-                bol_fichero = True
-            else:
-                bol_fichero = False
-    except FileNotFoundError as e:
-        bol_fichero = True
-    except IOError as e:
-        bol_fichero = True
-    if bol_fichero:
-        archivo = open(rutas_unitarias[2], 'w')
-        archivo.close()
-        with open(rutas_unitarias[2], 'r+') as csvfile:
-            fieldnames = ['empresa']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-    for i in range(4):
-        try:
-            with open(rutas_parecidas[i], 'r') as f:
-                if os.stat(rutas_parecidas[i]).st_size == 0:
-                    bol_fichero = True
-                else:
-                    bol_fichero = False
-        except FileNotFoundError as e:
-            bol_fichero = True
-        except IOError as e:
-            bol_fichero = True
-        if bol_fichero:
-            archivo = open(rutas_parecidas[i], 'w')
-            archivo.close()
-        if i < 2:
-            with open(rutas_parecidas[i], 'r+') as csvfile:
-                fieldnames = ['id', 'nombre', 'descripcion']
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                writer.writeheader()
-        else:
-            with open(rutas_parecidas[i], 'r+') as csvfile:
-                fieldnames = ['id', 'descripcion', 'estado']
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                writer.writeheader()
-    lector_ficheros(rutas_unitarias, rutas_parecidas)
-
-
 # Guardar_usuarios sirve para poder guardar los usuarios en el csv
 def guardar_usuarios():
     with open("./Ficheros/usuarios.csv", 'r+') as csvfile:
@@ -488,7 +285,8 @@ def menu_login():
         except ValueError:
             print("No ha elegido un numero.")
         if menu == 1:
-            login()
+            login_BBDD()
+           # login()
             if usuario_logueado.permisos == "Admin" or usuario_logueado.permisos == "Jefe":
                 menu_completo()
             elif usuario_logueado.permisos == "Empleado":
@@ -1333,9 +1131,22 @@ def bucle_graficos(nombre, arrays):
 
 
 def conexion():
+    print("")
+
+
+def login_BBDD():
+    global usuario, clave, usuario_logueado
+
+    usuario = input("Indique el usuario: ")
+    clave = input("Indique la clave del usuario: ")
+    clave = hashlib.sha224(clave.encode('utf-8')).hexdigest()
     db = pymysql.connect(host="127.0.0.1", user='root', password='root', db='python', port=3306)
-    db.close()
+    cursor = db.cursor()
+    sql = """SELECT * from Usuarios where usuario=%s"""
+    cursor.execute(sql, usuario)
+    dato = cursor.fetchone()
+    if cursor.rowcount != 0:
+        usuario_logueado = Usuario(dato[0], dato[1], dato[2], dato[3])
 
 
-comprobar_csv()
 menu_login()
