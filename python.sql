@@ -129,7 +129,12 @@ CREATE TABLE IF NOT EXISTS `Usuarios` (
 --
 
 INSERT INTO `Usuarios` (`usuario`, `clave`, `permisos`, `departamento`) VALUES
-('Admin', '88362c80f2ac5ba94bb93ded68608147c9656e340672d37b86f219c6', 'Admin', 'Jefe');
+('Admin', '88362c80f2ac5ba94bb93ded68608147c9656e340672d37b86f219c6', 'Admin', 'Jefe'),
+('Compras', '51f14142cecef27e4f3a953b0c09fd7f60e76b02faea5be696f4ed5a', 'Empleado', 'Compras'),
+('Jefe', 'c6a1465a311ee38b7eeabacdd33833e4e2b0564e2c420570e48b28d5', 'Jefe', 'Jefe'),
+('Produccion', 'be9f9952577e92cc28c1232096a884c01335a71fd297724dcf7f428f', 'Empleado', 'Produccion'),
+('RRHH', '3df2c02c84d672a51fcf10bd9239711f6a3326a3e530efff47e4f7d8', 'Empleado', 'RRHH'),
+('Ventas', '4ba16d4d8eb30acdbeb34e3f9d9e35d4a06f63a6af753c6964d46161', 'Empleado', 'Ventas');
 
 -- --------------------------------------------------------
 
