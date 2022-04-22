@@ -1,6 +1,5 @@
 import csv
 import hashlib
-import os
 import random
 import pymysql
 from os import path
@@ -117,7 +116,7 @@ def generar_contraseya():
     return password
 
 
-# Registro es el sistema para poder registrar los usuarios
+# Registro es el sistema para poder registrar los usuarios en la BBDD
 def registro_BBDD():
     global usuario, clave, permisos, departamento
     bol_menu = True
@@ -135,30 +134,32 @@ def registro_BBDD():
         if cancelar():
             print("Cancelando operacion y redirigiendo al menu.")
         else:
-            print("Creando usuario")
-            print("La clave del usuario es: " + clave)
-            clave = hashlib.sha224(clave.encode('utf-8')).hexdigest()
             db = conexion()
             cursor = db.cursor()
-            sql = """INSERT INTO Usuarios (usuario,clave,permisos,departamento) VALUES (%s,%s,%s,%s)"""
-            val = (usuario, clave, permisos, departamento)
-            cursor.execute(sql, val)
-            db.commit()
-            confirmacion = input(
-                "Si quiere seguir creando usuarios escriba S: ")
-            if confirmacion.upper() != "S":
-                bol_menu = False
+            sql = """SELECT * from Usuarios where usuario=%s"""
+            cursor.execute(sql, usuario)
+            if cursor.rowcount != 0:
+                print("El usuario ya existe.")
+            else:
+                print("Creando usuario")
+                print("La clave del usuario es: " + clave)
+                clave = hashlib.sha224(clave.encode('utf-8')).hexdigest()
+                val = (usuario, clave, permisos, departamento)
+                guardar_usuarios_BBDD(val)
+                confirmacion = input(
+                    "Si quiere seguir creando usuarios escriba S: ")
+                if confirmacion.upper() != "S":
+                    bol_menu = False
 
 
 # Guardar_usuarios sirve para poder guardar los usuarios en la BBDD
-def guardar_usuarios():
-    with open("./Ficheros/usuarios.csv", 'r+') as csvfile:
-        fieldnames = ['usuario', 'clave', 'permisos', 'departamento']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for usuario in usuarios.values():
-            writer.writerow({'usuario': usuario.usuario, 'clave': usuario.clave, 'permisos': usuario.permisos,
-                             'departamento': usuario.departamento})
+def guardar_usuarios_BBDD(val):
+    db = conexion()
+    cursor = db.cursor()
+    sql = """INSERT INTO Usuarios (usuario,clave,permisos,departamento) VALUES (%s,%s,%s,%s)"""
+    val = (usuario, clave, permisos, departamento)
+    cursor.execute(sql, val)
+    db.commit()
 
 
 # Guardar_empresas sirve para poder guardar las empresas en el csv
@@ -244,7 +245,6 @@ def guardar_objetos_materia_prima():
 
 # Guardar_csv sirve para acceder a todos los guardados de csv
 def guardar_BBDD():
-    guardar_usuarios()
     guardar_compras()
     guardar_ventas()
     guardar_empresas()
@@ -270,7 +270,6 @@ def menu_login():
             print("No ha elegido un numero.")
         if menu == 1:
             login_BBDD()
-            # login()
             if usuario_logueado.permisos == "Admin" or usuario_logueado.permisos == "Jefe":
                 menu_completo()
             elif usuario_logueado.permisos == "Empleado":
@@ -972,7 +971,6 @@ def menu_RRHH():
             borrar_usuario()
         elif menu == 4:
             print("Moviendo al menu principal")
-            guardar_usuarios()
             bol_menu_RRHH = False
 
 
@@ -1129,8 +1127,9 @@ def login_BBDD():
     clave = hashlib.sha224(clave.encode('utf-8')).hexdigest()
     db = conexion()
     cursor = db.cursor()
-    sql = """SELECT * from Usuarios where usuario=%s"""
-    cursor.execute(sql, usuario)
+    val = (usuario, clave)
+    sql = """SELECT * from Usuarios where usuario=%s and clave=%s"""
+    cursor.execute(sql, val)
     dato = cursor.fetchone()
     if cursor.rowcount != 0:
         usuario_logueado = Usuario(dato[0], dato[1], dato[2], dato[3])
