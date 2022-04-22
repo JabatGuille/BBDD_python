@@ -98,24 +98,6 @@ def enum_estado(objeto):
     return estado
 
 
-# Login es el sistema para poder loggear el usuario
-def login():
-    global usuario_logueado
-    bol_menu = True
-    while bol_menu:
-        usuario = input("Indique el usuario: ")
-        clave = input("Indique la clave del usuario: ")
-        if usuarios.keys().__contains__(usuario):
-            if usuarios[usuario].clave == clave:
-                print("Accediendo al programa")
-                usuario_logueado = usuarios[usuario]
-                bol_menu = False
-            else:
-                print("Contraseña incorrecta")
-        else:
-            print("El usuario no existe")
-
-
 # Generar_contraseya sirve para poder generar una contraseña segura y aleatoria
 def generar_contraseya():
     numeros = list("0123456789")
@@ -136,37 +118,39 @@ def generar_contraseya():
 
 
 # Registro es el sistema para poder registrar los usuarios
-def registro():
-    if usuario_logueado.usuario == "":
-        print("No hay usuario logueado, redirigiendo al apartado de logueo")
-        login()
-    if usuario_logueado.permisos == Permisos.JEFE.value or usuario_logueado.permisos == Permisos.ADMIN.value or usuario_logueado.departamento == Departamentos.RRHH.value:
-        global usuario, clave, permisos, departamento
-        bol_menu = True
-        while bol_menu:
-            bol_submenu = True
-            while bol_submenu:
-                usuario = input("Escriba el nombre de usuario: ")
-                if usuarios.keys().__contains__(usuario):
-                    print("El usuario ya exite")
-                else:
-                    bol_submenu = False
-            clave = generar_contraseya()
-            permisos = enum_permisos()
-            departamento = enum_departamento()
-            if cancelar():
-                print("Cancelando operacion y redirigiendo al menu.")
+def registro_BBDD():
+    global usuario, clave, permisos, departamento
+    bol_menu = True
+    while bol_menu:
+        bol_submenu = True
+        while bol_submenu:
+            usuario = input("Escriba el nombre de usuario: ")
+            if usuarios.keys().__contains__(usuario):
+                print("El usuario ya exite")
             else:
-                print("Creando usuario")
-                print("La clave del usuario es: " + clave)
-                usuarios[usuario] = Usuario(usuario, clave, permisos, departamento)
-                confirmacion = input(
-                    "Si quiere seguir creando usuarios escriba S: ")
-                if confirmacion.upper() != "S":
-                    bol_menu = False
+                bol_submenu = False
+        clave = generar_contraseya()
+        permisos = enum_permisos()
+        departamento = enum_departamento()
+        if cancelar():
+            print("Cancelando operacion y redirigiendo al menu.")
+        else:
+            print("Creando usuario")
+            print("La clave del usuario es: " + clave)
+            clave = hashlib.sha224(clave.encode('utf-8')).hexdigest()
+            db = conexion()
+            cursor = db.cursor()
+            sql = """INSERT INTO Usuarios (usuario,clave,permisos,departamento) VALUES (%s,%s,%s,%s)"""
+            val = (usuario, clave, permisos, departamento)
+            cursor.execute(sql, val)
+            db.commit()
+            confirmacion = input(
+                "Si quiere seguir creando usuarios escriba S: ")
+            if confirmacion.upper() != "S":
+                bol_menu = False
 
 
-# Guardar_usuarios sirve para poder guardar los usuarios en el csv
+# Guardar_usuarios sirve para poder guardar los usuarios en la BBDD
 def guardar_usuarios():
     with open("./Ficheros/usuarios.csv", 'r+') as csvfile:
         fieldnames = ['usuario', 'clave', 'permisos', 'departamento']
@@ -259,7 +243,7 @@ def guardar_objetos_materia_prima():
 
 
 # Guardar_csv sirve para acceder a todos los guardados de csv
-def guardar_csv():
+def guardar_BBDD():
     guardar_usuarios()
     guardar_compras()
     guardar_ventas()
@@ -270,7 +254,7 @@ def guardar_csv():
 
 # Menu_login es el menu donde puedes acceder al login, registrar un usuario temporal o terminar la aplicacion
 def menu_login():
-    guardar_csv()
+    # guardar_BBDD()
     global menu, departamento, usuario_logueado
     usuario_logueado = Usuario("", "", "", "")
     bol_menu_login = True
@@ -286,7 +270,7 @@ def menu_login():
             print("No ha elegido un numero.")
         if menu == 1:
             login_BBDD()
-           # login()
+            # login()
             if usuario_logueado.permisos == "Admin" or usuario_logueado.permisos == "Jefe":
                 menu_completo()
             elif usuario_logueado.permisos == "Empleado":
@@ -304,7 +288,7 @@ def menu_login():
             menu_lecturas()
         elif menu == 3:
             print("Guardando los datos, espere un momento.")
-            guardar_csv()
+            # guardar_BBDD()
             print("Saliendo del programa.")
             bol_menu_login = False
 
@@ -983,7 +967,7 @@ def menu_RRHH():
         if menu == 1:
             mostrar_empleados()
         elif menu == 2:
-            registro()
+            registro_BBDD()
         elif menu == 3:
             borrar_usuario()
         elif menu == 4:
@@ -1057,7 +1041,7 @@ def menu_completo():
             menu_RRHH()
         elif menu == 5:
             print("Crear usuarios")
-            registro()
+            registro_BBDD()
         elif menu == 6:
             print("Saliendo al menu login")
             bol_menu_completo = False
@@ -1130,17 +1114,20 @@ def bucle_graficos(nombre, arrays):
     plt.show()
 
 
+# Funcion que sirve para hacer la conexion con la BBDD
 def conexion():
-    print("")
+    db = pymysql.connect(host="127.0.0.1", user='root', password='root', db='python', port=3306)
+    return db
 
 
+# Funcion para poder hacer login usando la  BBDD
 def login_BBDD():
     global usuario, clave, usuario_logueado
 
     usuario = input("Indique el usuario: ")
     clave = input("Indique la clave del usuario: ")
     clave = hashlib.sha224(clave.encode('utf-8')).hexdigest()
-    db = pymysql.connect(host="127.0.0.1", user='root', password='root', db='python', port=3306)
+    db = conexion()
     cursor = db.cursor()
     sql = """SELECT * from Usuarios where usuario=%s"""
     cursor.execute(sql, usuario)
