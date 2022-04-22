@@ -1,9 +1,6 @@
-import csv
 import hashlib
 import random
 import pymysql
-from os import path
-from os import remove
 
 import matplotlib.pyplot as plt
 
@@ -162,96 +159,6 @@ def guardar_usuarios_BBDD(val):
     db.commit()
 
 
-# Guardar_empresas sirve para poder guardar las empresas en el csv
-def guardar_empresas():
-    with open("./Ficheros/empresas.csv", 'r+') as csvfile:
-        fieldnames = ['empresa']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for empresa in empresas.values():
-            writer.writerow({'empresa': empresa.empresa})
-
-
-# Guardar_compras sirve para poder guardar las compras en el csv
-def guardar_compras():
-    with open("./Ficheros/compras.csv", 'r+') as csvfile:
-        fieldnames = ['id', 'descripcion', 'estado']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for compra in compras.values():
-            writer.writerow({'id': compra.id, 'descripcion': compra.descripcion, 'estado': compra.estado})
-    with open("./Ficheros/Relaciones/compras_empresas.csv", 'r+') as csvfile:
-        fieldnames = ['compra_id', 'empresa']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for compra in compras.values():
-            for empresa in compra.proveedores.values():
-                writer.writerow({'compra_id': compra.id, 'empresa': empresa.empresa})
-
-
-# Guardar_ventas sirve para poder guardar las ventas en el csv
-def guardar_ventas():
-    with open("./Ficheros/ventas.csv", 'r+') as csvfile:
-        fieldnames = ['id', 'descripcion', 'estado']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for venta in ventas.values():
-            writer.writerow({'id': venta.id, 'descripcion': venta.descripcion, 'estado': venta.estado})
-    with open("./Ficheros/Relaciones/ventas_empresas.csv", 'r+') as csvfile:
-        fieldnames = ['ventas_id', 'empresa']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for venta in ventas.values():
-            for empresa in venta.vendedores.values():
-                writer.writerow({'ventas_id': venta.id, 'empresa': empresa.empresa})
-
-
-# Guardar_produccion sirve para poder guardar la produccion en el csv
-def guardar_produccion():
-    if path.exists("./Ficheros/produccion.csv"):
-        remove("./Ficheros/produccion.csv")
-        archivo = open("./Ficheros/produccion.csv", 'w')
-        archivo.close()
-    with open("./Ficheros/produccion.csv", 'r+') as csvfile:
-        fieldnames = ['id', 'descripcion', 'cantidad', 'objeto']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for producto in produccion.values():
-            writer.writerow({'id': producto.id, 'descripcion': producto.descripcion,
-                             'cantidad': producto.cantidad, 'objeto': producto.objeto.id})
-
-
-# Guardar_objetos_materia_prima sirve para poder guardar los objetos y la materia prima en el csv
-def guardar_objetos_materia_prima():
-    fieldnames = ['id', 'nombre', 'descripcion']
-    with open("./Ficheros/objetos.csv", 'r+') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for objeto in objetos.values():
-            writer.writerow({'id': objeto.id, 'nombre': objeto.nombre, 'descripcion': objeto.descripcion})
-    with open("./Ficheros/materia_prima.csv", 'r+') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for materia in materia_prima.values():
-            writer.writerow({'id': materia.id, 'nombre': materia.nombre, 'descripcion': materia.descripcion})
-    with open("./Ficheros/Relaciones/objetos_materiaprima.csv", 'r+') as csvfile:
-        fieldnames = ['objetos_id', 'materiaprima_id']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for objeto in objetos.values():
-            for materia in objeto.materiales.values():
-                writer.writerow({'objetos_id': objeto.id, 'materiaprima_id': materia.id})
-
-
-# Guardar_csv sirve para acceder a todos los guardados de csv
-def guardar_BBDD():
-    guardar_compras()
-    guardar_ventas()
-    guardar_empresas()
-    guardar_produccion()
-    guardar_objetos_materia_prima()
-
-
 # Menu_login es el menu donde puedes acceder al login, registrar un usuario temporal o terminar la aplicacion
 def menu_login():
     # guardar_BBDD()
@@ -374,8 +281,6 @@ def menu_compras():
             crear_graficos("Compras")
         elif menu == 7:
             print("Moviendo al menu principal")
-            guardar_empresas()
-            guardar_compras()
             bol_menu_compras = False
 
 
@@ -574,8 +479,6 @@ def menu_ventas():
             crear_graficos("Ventas")
         elif menu == 7:
             print("Moviendo al menu principal")
-            guardar_empresas()
-            guardar_ventas()
             bol_menu_ventas = False
 
 
@@ -774,8 +677,6 @@ def menu_produccion():
             crear_graficos("Produccion")
         elif menu == 7:
             print("Moviendo al menu principal")
-            guardar_produccion()
-            guardar_objetos_materia_prima()
             bol_menu_produccion = False
 
 
