@@ -1,10 +1,7 @@
 class Compras:
 
-    def __init__(self, id, descripcion, estado):
+    def __init__(self, id, descripcion, estado, proveedor):
         self.id = id
         self.descripcion = descripcion
         self.estado = estado
-        self.proveedores = {}
-
-    def ayadir_comprador(self, proveedor):
-        self.proveedores[proveedor.empresa] = proveedor
+        self.proveedor = proveedor

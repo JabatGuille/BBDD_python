@@ -154,7 +154,6 @@ def guardar_usuarios_BBDD(val):
     db = conexion()
     cursor = db.cursor()
     sql = """INSERT INTO Usuarios (usuario,clave,permisos,departamento) VALUES (%s,%s,%s,%s)"""
-    val = (usuario, clave, permisos, departamento)
     cursor.execute(sql, val)
     db.commit()
 
@@ -241,16 +240,32 @@ def crear_orden(objeto):
             bol = False
         else:
             if objeto == "venta":
-                ventas[len(ventas)] = Ventas(len(ventas), descripcion, estado)
-                ventas[len(ventas) - 1].ayadir_comprador(empresas[Nempresa])
+                ventas[len(ventas)] = Ventas(len(ventas), descripcion, estado, Nempresa)
                 empresas[Nempresa].ayadir_ventas(ventas[len(ventas) - 1])
+                venta = ventas[len(ventas) - 1]
+                guardar_orden_BBDD('venta', venta)
             else:
-                compras[len(compras)] = Compras(len(compras), descripcion, estado)
-                compras[len(compras) - 1].ayadir_comprador(empresas[Nempresa])
+                compras[len(compras)] = Compras(len(compras), descripcion, estado, Nempresa)
                 empresas[Nempresa].ayadir_compras(compras[len(compras) - 1])
+                compra = compras[len(compras) - 1]
+                guardar_orden_BBDD('venta', compra)
             opcion = input("Si quiere seguir creando ordendes de compra escriba S: ").upper()
             if opcion != "S":
                 print("Saliendo al menu")
+
+
+def guardar_orden_BBDD(departamento, objeto):
+    db = conexion()
+    cursor = db.cursor()
+    if departamento == "venta":
+        sql = """INSERT INTO ventas (descripcion,estado,empresa) VALUES (%s,%s,%s)"""
+        val = (objeto.descripcion, objeto.estado, objeto.vendedor)
+        cursor.execute(sql, val)
+    else:
+        sql = """INSERT INTO compras (usuario,clave,permisos,departamento,empresa) VALUES (%s,%s,%s)"""
+        val = (objeto.descripcion, objeto.estado, objeto.proveedor)
+        cursor.execute(sql, val)
+    db.commit()
 
 
 # Menu_compras es el menu al que acceden los empleados del departamento de compras
@@ -299,9 +314,8 @@ def editar_orden_compra():
                     print("ID: " + str(compra.id))
                     print("Descripcion: " + compra.descripcion)
                     print("Estado: " + compra.estado)
-                    print("Empresas en la compra.")
-                    for empresa in compra.proveedores.values():
-                        print("Nombre: " + empresa.empresa)
+                    print("Empresa en la orden de compra.")
+                    print(compra.proveedor)
                 else:
                     cont += 1
             if cont != len(compras):
@@ -337,22 +351,22 @@ def editar_orden_compra():
                 if opcion == "S":
                     bol_submenu = True
                     while bol_submenu:
-                        print("\n-1 Añadir comprador.\n-2 Quitar comprador.\n-3 Terminar de editar la orden de compra.")
+                        print("\n-1 cambiar comprador. \n-2 Terminar de editar la orden de compra.")
                         try:
                             menu = int(input("Escriba el numero de la opcion que quiere elegir: "))
-                            if menu < 1 or menu > 3:
+                            if menu < 1 or menu > 2:
                                 print("Esa opcion no esta en el menu.")
                         except ValueError:
                             print("No ha elegido un numero.")
                         if menu == 1:
                             bol = True
                             while bol:
-                                print("Empresas en la compra.")
+                                print("Empresas a seleccionar.")
                                 for empresa in empresas.values():
                                     print("Nombre: " + empresa.empresa)
                                 Nempresa = input("Escriba el nombre de la empresa, escriba Salir si quiere salir: ")
                                 if empresas.keys().__contains__(Nempresa):
-                                    if compras[compra_id].proveedores.keys().__contains__(Nempresa):
+                                    if compras[compra_id].proveedor == Nempresa:
                                         print("La empresa ya se encuentra en la orden de compra")
                                     else:
                                         bol = False
@@ -365,32 +379,11 @@ def editar_orden_compra():
                                 if cancelar():
                                     print("Cancelando operacion.")
                                 else:
-                                    compras[compra_id].ayadir_comprador(empresas[Nempresa])
+                                    Nempresa_antigua = compras[compra_id].proveedor
+                                    empresas[Nempresa_antigua].quitar_compra(compra_id)
+                                    compras[compra_id].proveedor = Nempresa
                                     empresas[Nempresa].ayadir_compras(compras[compra_id])
                         if menu == 2:
-                            bol = True
-                            while bol:
-                                print("Empresas en la compra.")
-                                for empresa in compras[compra_id].proveedores.values():
-                                    print("Nombre: " + empresa.empresa)
-                                Nempresa = input("Escriba el nombre de la empresa, escriba Salir si quiere salir: ")
-                                if empresas.keys().__contains__(Nempresa):
-                                    if compras[compra_id].proveedores.keys().__contains__(Nempresa):
-                                        bol = False
-                                    else:
-                                        print("La empresa no se encuentra en la orden de compra")
-                                elif Nempresa.lower().capitalize() == "Salir":
-                                    print("Saliendo")
-                                    bol = False
-                                else:
-                                    print("La empresa no se encuentra en la lista")
-                                if Nempresa.lower().capitalize() != "Salir":
-                                    if cancelar():
-                                        print("Cancelando operacion.")
-                                    else:
-                                        compras[compra_id].proveedores.pop(Nempresa)
-                                        empresas[Nempresa].compras.pop(compra_id)
-                        if menu == 3:
                             print("Saliendo.")
                             bol_submenu = False
             else:
@@ -410,9 +403,8 @@ def anular_orden_compra():
                 print("ID: " + str(compra.id))
                 print("Descripcion: " + compra.descripcion)
                 print("Estado: " + compra.estado)
-                print("Empresas en la compra.")
-                for empresa in compra.proveedores.values():
-                    print("Nombre: " + empresa.empresa)
+                print("Empresa en la compra.")
+                print(compra.proveedor)
             else:
                 cont += 1
         if cont != len(compras):
@@ -444,9 +436,8 @@ def mostrar_ordenes_compra():
             print("ID: " + str(compra.id))
             print("Descripción: " + compra.descripcion)
             print("Estado: " + compra.estado)
-            print("Empresas en la orden.")
-            for empresa in compra.proveedores.values():
-                print("Empresa: " + empresa.empresa)
+            print("Empresa en la orden.")
+            print(compra.proveedor)
     else:
         print("No hay ordenes de compra")
 
@@ -497,9 +488,8 @@ def editar_orden_venta():
                     print("ID: " + str(venta.id))
                     print("Descripcion: " + venta.descripcion)
                     print("Estado: " + venta.estado)
-                    print("Empresas en la compra.")
-                    for empresa in venta.vendedores.values():
-                        print("Nombre: " + empresa.empresa)
+                    print("Empresa en la compra.")
+                    print(venta.vendedor)
                 else:
                     cont += 1
             if cont != len(ventas):
@@ -530,27 +520,27 @@ def editar_orden_venta():
                 if opcion == "S":
                     estado = enum_estado("venta")
                     ventas[venta_id].estado = estado
-                print("¿Quiere añadir o quitar compradores?")
+                print("¿Quiere cambiar el comprador?")
                 opcion = input("Escriba S: ").upper()
                 if opcion == "S":
                     bol_submenu = True
                     while bol_submenu:
-                        print("\n-1 Añadir comprador.\n-2 Quitar comprador.\n-3 Terminar de editar la orden de venta.")
+                        print("\n-1 Cambia comprador. \n-2 Terminar de editar la orden de venta.")
                         try:
                             menu = int(input("Escriba el numero de la opcion que quiere elegir: "))
-                            if menu < 1 or menu > 3:
+                            if menu < 1 or menu > 2:
                                 print("Esa opcion no esta en el menu.")
                         except ValueError:
                             print("No ha elegido un numero.")
                         if menu == 1:
                             bol = True
                             while bol:
-                                print("Empresas en la compra.")
+                                print("Empresa disponibles.")
                                 for empresa in empresas.values():
                                     print("Nombre: " + empresa.empresa)
                                 Nempresa = input("Escriba el nombre de la empresa, escriba Salir si quiere salir: ")
                                 if empresas.keys().__contains__(Nempresa):
-                                    if ventas[venta_id].vendedores.keys().__contains__(Nempresa):
+                                    if ventas[venta_id].vendedor == Nempresa:
                                         print("La empresa ya se encuentra en la orden de compra")
                                     else:
                                         bol = False
@@ -563,32 +553,11 @@ def editar_orden_venta():
                                 if cancelar():
                                     print("Cancelando operacion.")
                                 else:
+                                    Nempresa_antigua = ventas[venta_id].vendedor
+                                    empresas[Nempresa_antigua].quitar_venta(ventas[venta_id])
                                     ventas[venta_id].ayadir_comprador(empresas[Nempresa])
                                     empresas[Nempresa].ayadir_ventas(ventas[venta_id])
                         if menu == 2:
-                            bol = True
-                            while bol:
-                                print("Empresas en la venta.")
-                                for empresa in ventas[venta_id].vendedores.values():
-                                    print("Nombre: " + empresa.empresa)
-                                Nempresa = input("Escriba el nombre de la empresa, escriba Salir si quiere salir: ")
-                                if empresas.keys().__contains__(Nempresa):
-                                    if ventas[venta_id].vendedores.keys().__contains__(Nempresa):
-                                        bol = False
-                                    else:
-                                        print("La empresa no se encuentra en la orden de compra")
-                                elif Nempresa.lower().capitalize() == "Salir":
-                                    print("Saliendo")
-                                    bol = False
-                                else:
-                                    print("La empresa no se encuentra en la lista")
-                                if Nempresa.lower().capitalize() != "Salir":
-                                    if cancelar():
-                                        print("Cancelando operacion.")
-                                else:
-                                    ventas[venta_id].vendedores.pop(Nempresa)
-                                    empresas[Nempresa].ventas.pop(venta_id)
-                        if menu == 3:
                             print("Saliendo.")
                             bol_submenu = False
             else:
@@ -608,9 +577,8 @@ def anular_orden_venta():
                 print("ID: " + str(venta.id))
                 print("Descripcion: " + venta.descripcion)
                 print("Estado: " + venta.estado)
-                print("Empresas en la compra.")
-                for empresa in venta.vendedores.values():
-                    print("Nombre: " + empresa.empresa)
+                print("Empresa en la venta.")
+                print(venta.vendedor)
             else:
                 cont += 1
         if cont != len(ventas):
@@ -642,9 +610,8 @@ def mostrar_ordenes_venta():
             print("ID: " + str(venta.id))
             print("Descripción: " + venta.descripcion)
             print("Estado: " + venta.estado)
-            print("Empresas en la orden.")
-            for empresa in venta.vendedores.values():
-                print("Empresa: " + empresa.empresa)
+            print("Empresa en la orden.")
+            print(venta.vendedor)
     else:
         print("No hay ordenes de venta")
 
