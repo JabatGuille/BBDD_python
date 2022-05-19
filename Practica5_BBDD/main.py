@@ -204,10 +204,27 @@ def menu_login():
 def crear_empresa():
     bol_menu = True
     while bol_menu:
+        empresas.clear()
+        db = conexion()
+        if db:
+            cursor = db.cursor()
+            val = Estado.CANCELADA.value
+            sql = """SELECT * from empresas"""
+            cursor.execute(sql, val)
+            datos = cursor.fetchall()
+            for dato in datos:
+                empresas[dato[0]] = Empresa(dato[0])
+            db.close()
         empresa = input("Escriba el nombre de la empresa: ")
         if empresas.keys().__contains__(empresa):
             print("La empresa ya exite")
         else:
+            db = conexion()
+            if db:
+                cursor = db.cursor()
+                sql = """INSERT INTO Empresas empresa VALUES (%s)"""
+                val = (empresa)
+                cursor.execute(sql, val)
             empresas[empresa] = Empresa(empresa)
             bol_menu = False
 
@@ -316,7 +333,7 @@ def editar_orden_compra():
         datos = cursor.fetchall()
         for dato in datos:
             compras[dato[0]] = Compras(dato[0], dato[1], dato[2], dato[3])
-            db.close()
+        db.close()
     if len(compras) == 0:
         print("No hay ordenes de compra, redirigiendo a la creacion de ordendes")
         crear_orden("compra")
@@ -392,8 +409,8 @@ def editar_orden_compra():
                             bol = True
                             while bol:
                                 empresas.clear()
+                                db = conexion()
                                 if db:
-                                    db = conexion()
                                     cursor = db.cursor()
                                     val = Estado.CANCELADA.value
                                     sql = """SELECT * from empresas"""
@@ -446,32 +463,43 @@ def anular_orden_compra():
     global compra_id
     bol = True
     while bol:
-        cont = 0
+        compras.clear()
+        db = conexion()
+        if db:
+            cursor = db.cursor()
+            val = Estado.CANCELADA.value
+            sql = """SELECT * from compras where not estado=%s"""
+            cursor.execute(sql, val)
+            datos = cursor.fetchall()
+            for dato in datos:
+                compras[dato[0]] = Compras(dato[0], dato[1], dato[2], dato[3])
+                db.close()
         for compra in compras.values():
-            if compra.estado != "Cancelada":
-                print("ID: " + str(compra.id))
-                print("Descripcion: " + compra.descripcion)
-                print("Estado: " + compra.estado)
-                print("Empresa en la compra.")
-                print(compra.proveedor)
-            else:
-                cont += 1
-        if cont != len(compras):
+            print("ID: " + str(compra.id))
+            print("Descripcion: " + compra.descripcion)
+            print("Estado: " + compra.estado)
+            print("Empresa en la compra.")
+            print(compra.proveedor)
+        if len(compras) == 0:
             try:
                 compra_id = int(input("Escriba el id de la compra que quiere anular: "))
             except ValueError:
                 print("Debe escribir un numero")
             if compras.keys().__contains__(compra_id):
-                if compras[compra_id].estado == "Cancelada":
-                    print("Ese id no es valido")
-                else:
-                    bol = False
+                bol = False
             else:
                 print("El id seleccionado no existe")
             if cancelar():
                 print("Cancelando operacion")
             else:
-                compras[compra_id].estado = Estado.CANCELADA.value
+                if db:
+                    cursor = db.cursor()
+                    val = (Estado.CANCELADA.value, compra_id)
+                    sql = """UPDATE compras set estado=%s where id=%s"""
+                    cursor.execute(sql, val)
+                    db.commit()
+                    db.close()
+                    compras[compra_id].estado = Estado.CANCELADA.value
         else:
             bol = False
             print("No hay ordendes de compra para poder anular")
@@ -479,6 +507,16 @@ def anular_orden_compra():
 
 # Mostrar_ordenes_compra sirve para mostrar las ordenes de compra
 def mostrar_ordenes_compra():
+    compras.clear()
+    db = conexion()
+    if db:
+        cursor = db.cursor()
+        sql = """SELECT * from compras"""
+        cursor.execute(sql)
+        datos = cursor.fetchall()
+        for dato in datos:
+            compras[dato[0]] = Compras(dato[0], dato[1], dato[2], dato[3])
+        db.close()
     if len(compras) > 0:
         for compra in compras.values():
             print("Orden de compra.")
@@ -977,11 +1015,31 @@ def menu_lecturas():
 # crear_graficos sirve para crear graficos en base al departamento
 def crear_graficos(departamento):
     if departamento == "Compras":
+        compras.clear()
+        db = conexion()
+        if db:
+            cursor = db.cursor()
+            sql = """SELECT * from compras"""
+            cursor.execute(sql)
+            datos = cursor.fetchall()
+            for dato in datos:
+                compras[dato[0]] = Compras(dato[0], dato[1], dato[2], dato[3])
+            db.close()
         if len(compras) > 0:
             bucle_graficos(departamento, compras)
         else:
             print("No existen compras para crear graficos")
     if departamento == "Ventas":
+        ventas.clear()
+        db = conexion()
+        if db:
+            cursor = db.cursor()
+            sql = """SELECT * from ventas"""
+            cursor.execute(sql)
+            datos = cursor.fetchall()
+            for dato in datos:
+                ventas[dato[0]] = Ventas(dato[0], dato[1], dato[2], dato[3])
+            db.close()
         if len(ventas) > 0:
             bucle_graficos(departamento, ventas)
         else:
