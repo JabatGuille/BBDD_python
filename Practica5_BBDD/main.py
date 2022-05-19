@@ -152,10 +152,12 @@ def registro_BBDD():
 # Guardar_usuarios sirve para poder guardar los usuarios en la BBDD
 def guardar_usuarios_BBDD(val):
     db = conexion()
-    cursor = db.cursor()
-    sql = """INSERT INTO Usuarios (usuario,clave,permisos,departamento) VALUES (%s,%s,%s,%s)"""
-    cursor.execute(sql, val)
-    db.commit()
+    if db:
+        cursor = db.cursor()
+        sql = """INSERT INTO Usuarios (usuario,clave,permisos,departamento) VALUES (%s,%s,%s,%s)"""
+        cursor.execute(sql, val)
+        db.commit()
+        db.close()
 
 
 # Menu_login es el menu donde puedes acceder al login, registrar un usuario temporal o terminar la aplicacion
@@ -256,16 +258,18 @@ def crear_orden(objeto):
 
 def guardar_orden_BBDD(departamento, objeto):
     db = conexion()
-    cursor = db.cursor()
-    if departamento == "venta":
-        sql = """INSERT INTO ventas (descripcion,estado,empresa) VALUES (%s,%s,%s)"""
-        val = (objeto.descripcion, objeto.estado, objeto.vendedor)
-        cursor.execute(sql, val)
-    else:
-        sql = """INSERT INTO compras (usuario,clave,permisos,departamento,empresa) VALUES (%s,%s,%s)"""
-        val = (objeto.descripcion, objeto.estado, objeto.proveedor)
-        cursor.execute(sql, val)
-    db.commit()
+    if db:
+        cursor = db.cursor()
+        if departamento == "venta":
+            sql = """INSERT INTO ventas (descripcion,estado,empresa) VALUES (%s,%s,%s)"""
+            val = (objeto.descripcion, objeto.estado, objeto.vendedor)
+            cursor.execute(sql, val)
+        else:
+            sql = """INSERT INTO compras (usuario,clave,permisos,departamento,empresa) VALUES (%s,%s,%s)"""
+            val = (objeto.descripcion, objeto.estado, objeto.proveedor)
+            cursor.execute(sql, val)
+        db.commit()
+        db.close()
 
 
 # Menu_compras es el menu al que acceden los empleados del departamento de compras
@@ -302,6 +306,17 @@ def menu_compras():
 # Editar_orden_compra sirve para editar las ordenes de compra
 def editar_orden_compra():
     global compra_id, menu, Nempresa
+    compras.clear()
+    db = conexion()
+    if db:
+        cursor = db.cursor()
+        val = Estado.CANCELADA.value
+        sql = """SELECT * from compras where not estado=%s"""
+        cursor.execute(sql, val)
+        datos = cursor.fetchall()
+        for dato in datos:
+            compras[dato[0]] = Compras(dato[0], dato[1], dato[2], dato[3])
+            db.close()
     if len(compras) == 0:
         print("No hay ordenes de compra, redirigiendo a la creacion de ordendes")
         crear_orden("compra")
@@ -338,6 +353,13 @@ def editar_orden_compra():
                         descripcion = input("Escriba la descripcion: ")
                         if descripcion != "":
                             compras[compra_id].descripcion = descripcion
+                            db = conexion()
+                            cursor = db.cursor()
+                            val = (descripcion, compra_id)
+                            sql = """UPDATE compras set descripcion=%s where id=%s"""
+                            cursor.execute(sql, val)
+                            db.commit()
+                            db.close()
                             bol = False
                         else:
                             print("La descripcion no puede estar vacia")
@@ -346,6 +368,14 @@ def editar_orden_compra():
                 if opcion == "S":
                     estado = enum_estado("compra")
                     compras[compra_id].estado = estado
+                    db = conexion()
+                    if db:
+                        cursor = db.cursor()
+                        val = (estado, compra_id)
+                        sql = """UPDATE compras set estado=%s where id=%s"""
+                        cursor.execute(sql, val)
+                        db.commit()
+                        db.close()
                 print("¿Quiere añadir o quitar compradores?")
                 opcion = input("Escriba S: ").upper()
                 if opcion == "S":
@@ -361,6 +391,17 @@ def editar_orden_compra():
                         if menu == 1:
                             bol = True
                             while bol:
+                                empresas.clear()
+                                if db:
+                                    db = conexion()
+                                    cursor = db.cursor()
+                                    val = Estado.CANCELADA.value
+                                    sql = """SELECT * from empresas"""
+                                    cursor.execute(sql, val)
+                                    datos = cursor.fetchall()
+                                    for dato in datos:
+                                        empresas[dato[0]] = Empresa(dato[0])
+                                    db.close()
                                 print("Empresas a seleccionar.")
                                 for empresa in empresas.values():
                                     print("Nombre: " + empresa.empresa)
@@ -383,6 +424,14 @@ def editar_orden_compra():
                                     empresas[Nempresa_antigua].quitar_compra(compra_id)
                                     compras[compra_id].proveedor = Nempresa
                                     empresas[Nempresa].ayadir_compras(compras[compra_id])
+                                    db = conexion()
+                                    if db:
+                                        cursor = db.cursor()
+                                        val = (Nempresa, compra_id)
+                                        sql = """UPDATE compras set empresa=%s where id=%s"""
+                                        cursor.execute(sql, val)
+                                        db.commit()
+                                        db.close()
                         if menu == 2:
                             print("Saliendo.")
                             bol_submenu = False
@@ -982,8 +1031,12 @@ def bucle_graficos(nombre, arrays):
 
 # Funcion que sirve para hacer la conexion con la BBDD
 def conexion():
-    db = pymysql.connect(host="127.0.0.1", user='root', password='root', db='python', port=3306)
-    return db
+    try:
+        db = pymysql.connect(host="127.0.0.1", user='root', password='root', db='python', port=3306)
+        return db
+    except Exception:
+        print("Error de conexion con la BBDD, contacte con el admministrador.")
+        return False
 
 
 # Funcion para poder hacer login usando la  BBDD
@@ -994,13 +1047,15 @@ def login_BBDD():
     clave = input("Indique la clave del usuario: ")
     clave = hashlib.sha224(clave.encode('utf-8')).hexdigest()
     db = conexion()
-    cursor = db.cursor()
-    val = (usuario, clave)
-    sql = """SELECT * from Usuarios where usuario=%s and clave=%s"""
-    cursor.execute(sql, val)
-    dato = cursor.fetchone()
-    if cursor.rowcount != 0:
-        usuario_logueado = Usuario(dato[0], dato[1], dato[2], dato[3])
+    if db:
+        cursor = db.cursor()
+        val = (usuario, clave)
+        sql = """SELECT * from Usuarios where usuario=%s and clave=%s"""
+        cursor.execute(sql, val)
+        dato = cursor.fetchone()
+        if cursor.rowcount != 0:
+            usuario_logueado = Usuario(dato[0], dato[1], dato[2], dato[3])
+        db.close()
 
 
 menu_login()
