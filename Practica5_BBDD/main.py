@@ -15,7 +15,7 @@ from Enum.Departamentos import Departamentos
 from Enum.Estado import Estado
 from Enum.Permisos import Permisos
 
-usuario_logueado = Usuario("", "", "", "")
+usuario_logueado = Usuario("", "", "")
 usuarios = {}
 produccion = {}
 empresas = {}
@@ -163,7 +163,7 @@ def guardar_usuarios_BBDD(val):
 # Menu_login es el menu donde puedes acceder al login, registrar un usuario temporal o terminar la aplicacion
 def menu_login():
     global menu, departamento, usuario_logueado
-    usuario_logueado = Usuario("", "", "", "")
+    usuario_logueado = Usuario("", "", "")
     bol_menu_login = True
     while bol_menu_login:
         print(
@@ -190,7 +190,7 @@ def menu_login():
                     menu_RRHH()
         elif menu == 2:
             departamento = enum_departamento()
-            usuario_logueado = Usuario('temporal', 'temporal', 'Lectura', departamento)
+            usuario_logueado = Usuario('temporal', 'Lectura', departamento)
             menu_lecturas()
         elif menu == 3:
             print("Guardando los datos, espere un momento.")
@@ -1127,6 +1127,17 @@ def menu_RRHH():
 
 # Mostrar_empleados muestra todos los empleados de la empresa
 def mostrar_empleados():
+    usuarios.clear()
+    db = conexion()
+    if db:
+        cursor = db.cursor()
+        val = "Admin"
+        sql = """SELECT usuario,permisos,departamento from Usuarios where not usuario=%s"""
+        cursor.execute(sql, val)
+        datos = cursor.fetchall()
+        for dato in datos:
+            usuarios[dato[0]] = Usuario(dato[0], dato[1], dato[2])
+        db.close()
     if len(usuarios) > 0:
         for usuario in usuarios.values():
             print("Usuario: " + usuario.usuario)
@@ -1139,26 +1150,40 @@ def mostrar_empleados():
 
 # Borrar_usuario sirve para borrar usuarios pero no se pueden borrar ni usuarios admin ni usuarios jefe
 def borrar_usuario():
+    usuarios.clear()
+    db = conexion()
+    if db:
+        cursor = db.cursor()
+        val = (Permisos.JEFE.value, Permisos.ADMIN.value)
+        sql = """SELECT usuario,permisos,departamento from Usuarios where not permisos=%s or permisos=%s"""
+        cursor.execute(sql, val)
+        datos = cursor.fetchall()
+        for dato in datos:
+            usuarios[dato[0]] = Usuario(dato[0], dato[1], dato[2])
+        db.close()
     bol = True
     while bol:
         for usuario in usuarios.values():
-            if usuario.permisos != Permisos.ADMIN.value or usuario.permisos != Permisos.JEFE.value:
-                print("Nombre usuario: " + usuario.usuario)
-                print("Permisos: " + usuario.permisos)
-                print("Departamento: " + usuario.departamento)
+            print("Nombre usuario: " + usuario.usuario)
+            print("Permisos: " + usuario.permisos)
+            print("Departamento: " + usuario.departamento)
         Nusuario = input("Escribe el nombre del usuario que quieres borrar: ")
         if usuarios.keys().__contains__(Nusuario):
-            if usuarios[Nusuario].permisos != Permisos.ADMIN.value or usuarios[Nusuario].permisos \
-                    != Permisos.JEFE.value:
-                if cancelar():
-                    print("Cancelando operación.")
-                else:
-                    usuarios.pop(Nusuario)
-                    if input("Quieres seguir borrando usuarios escribe S: ").upper() != "S":
-                        print("Volviendo al menu.")
-                        bol = False
+            if cancelar():
+                print("Cancelando operación.")
             else:
-                print("Ese usuario no existe")
+                usuarios.pop(Nusuario)
+                db = conexion()
+                if db:
+                    cursor = db.cursor()
+                    sql = """DELETE FROM Usuarios where usuario=%s"""
+                    val = Nusuario
+                    cursor.execute(sql, val)
+                    db.commit()
+                    db.close()
+                if input("Quieres seguir borrando usuarios escribe S: ").upper() != "S":
+                    print("Volviendo al menu.")
+                    bol = False
         else:
             print("Ese usuario no existe.")
 
@@ -1304,11 +1329,11 @@ def login_BBDD():
     if db:
         cursor = db.cursor()
         val = (usuario, clave)
-        sql = """SELECT * from Usuarios where usuario=%s and clave=%s"""
+        sql = """SELECT usuario,permisos,departamento from Usuarios where usuario=%s and clave=%s"""
         cursor.execute(sql, val)
         dato = cursor.fetchone()
         if cursor.rowcount != 0:
-            usuario_logueado = Usuario(dato[0], dato[1], dato[2], dato[3])
+            usuario_logueado = Usuario(dato[0], dato[1], dato[2])
         db.close()
 
 

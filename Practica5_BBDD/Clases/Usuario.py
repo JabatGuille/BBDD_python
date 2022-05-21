@@ -1,8 +1,7 @@
 class Usuario:
 
-    def __init__(self, usuario, clave, permisos, departamento):
+    def __init__(self, usuario, permisos, departamento):
         self.usuario = usuario
-        self.clave = clave
         self.permisos = permisos
         self.departamento = departamento
 
