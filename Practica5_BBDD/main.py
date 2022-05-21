@@ -1266,6 +1266,22 @@ def crear_graficos(departamento):
         else:
             print("No existen ventas para crear graficos")
     if departamento == "Produccion":
+        objetos.clear()
+        produccion.clear()
+        db = conexion()
+        if db:
+            cursor = db.cursor()
+            sql = """SELECT * from objetos"""
+            cursor.execute(sql)
+            datos = cursor.fetchall()
+            for dato in datos:
+                objetos[dato[0]] = Objeto(dato[0], dato[1], dato[2])
+            sql = """SELECT * from Produccion"""
+            cursor.execute(sql)
+            datos = cursor.fetchall()
+            for dato in datos:
+                produccion[dato[0]] = Produccion(dato[0], dato[1], dato[2], dato[3])
+            db.close()
         if len(produccion) > 0:
             bucle_graficos(departamento, produccion)
         else:
@@ -1291,7 +1307,7 @@ def bucle_graficos(nombre, arrays):
         eje_x.clear()
         eje_y.clear()
         for producto in produccion.values():
-            eje_x.append(producto.objeto.nombre)
+            eje_x.append(objetos[producto.objeto_id].nombre)
             eje_y.append(producto.cantidad)
     plt.bar(eje_x, eje_y)
     plt.ylabel('Cantidad de ' + nombre.lower())
