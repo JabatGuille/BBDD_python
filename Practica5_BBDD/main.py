@@ -815,6 +815,16 @@ def crear_orden_produccion():
                     print("No has escrito un numero.")
             bol_submenu = True
             while bol_submenu:
+                objetos.clear()
+                db = conexion()
+                if db:
+                    cursor = db.cursor()
+                    sql = """SELECT * from objetos"""
+                    cursor.execute(sql)
+                    datos = cursor.fetchall()
+                    for dato in datos:
+                        objetos[dato[0]] = Objeto(dato[0], dato[1], dato[2])
+                    db.close()
                 for objeto in objetos.values():
                     print("ID: " + str(objeto.id))
                     print("Nombre: " + objeto.nombre)
@@ -830,7 +840,16 @@ def crear_orden_produccion():
             if cancelar():
                 print("Cancelando operación.")
             else:
-                produccion[len(produccion)] = Produccion(len(produccion), descripcion, cantidad, objetos[objeto_id])
+                produccion[len(produccion)] = Produccion(len(produccion), descripcion, cantidad, objeto_id)
+                db = conexion()
+                if db:
+                    objeto = produccion[len(produccion) - 1]
+                    cursor = db.cursor()
+                    sql = """INSERT INTO Produccion (descripcion,cantidad,objeto_id) VALUES (%s,%s,%s)"""
+                    val = (objeto.descripcion, objeto.cantidad, objeto.objeto.id)
+                    cursor.execute(sql, val)
+                    db.commit()
+                    db.close()
             opcion = input("Quiere seguir creando ordenes de produccion, escriba S: ")
             if opcion.upper() != "S":
                 bol = False
@@ -841,25 +860,66 @@ def crear_orden_produccion():
 
 # Borrar_orden_produccion sirve para borrar las ordenes de produccion
 def borrar_orden_produccion():
-    for producto in produccion.values():
-        print("ID: " + str(producto.id))
-        print("Descripción: " + producto.descripcion)
-        print("Cantidad: " + str(producto.cantidad))
-    try:
-        producto_id = int(input("Escriba el id de la orden de produccion: "))
-        if produccion.keys().__contains__(producto_id):
-            if cancelar():
-                print("Cancelando operacion")
+    produccion.clear()
+    objetos.clear()
+    db = conexion()
+    if db:
+        cursor = db.cursor()
+        sql = """SELECT * from Produccion"""
+        cursor.execute(sql)
+        datos = cursor.fetchall()
+        for dato in datos:
+            produccion[dato[0]] = Produccion(dato[0], dato[1], dato[2], dato[3])
+        sql = """SELECT * from objetos"""
+        cursor.execute(sql)
+        datos = cursor.fetchall()
+        for dato in datos:
+            objetos[dato[0]] = Objeto(dato[0], dato[1], dato[2])
+        db.close()
+    if len(produccion) > 0:
+        for producto in produccion.values():
+            print("ID: " + str(producto.id))
+            print("Descripción: " + producto.descripcion)
+            print("Cantidad: " + str(producto.cantidad))
+            print("Objeto de la orden")
+            print("ID: " + str(objetos[producto.objeto_id].id))
+            print("Nombre: " + objetos[producto.objeto_id].nombre)
+            print("Descripcion: " + objetos[producto.objeto_id].descripcion)
+        try:
+            producto_id = int(input("Escriba el id de la orden de produccion: "))
+            if produccion.keys().__contains__(producto_id):
+                if cancelar():
+                    print("Cancelando operacion")
+                else:
+                    db = conexion()
+                    if db:
+                        cursor = db.cursor()
+                        sql = """DELETE FROM Produccion where id=%s"""
+                        val = producto_id
+                        cursor.execute(sql, val)
+                        db.commit()
+                        db.close()
+                    produccion.pop(producto_id)
             else:
-                produccion.pop(producto_id)
-        else:
-            print("El id indicado no esta en la lista")
-    except ValueError:
-        print("No has escrito un id correcto")
+                print("El id indicado no esta en la lista")
+        except ValueError:
+            print("No has escrito un id correcto")
+    else:
+        print("No hay ordenes de produccion.")
 
 
 # Crear_materia_prima sirve para poder crear las materias primas necesarias para los objetos
 def crear_materia_prima():
+    materia_prima.clear()
+    db = conexion()
+    if db:
+        cursor = db.cursor()
+        sql = """SELECT * from materia_prima"""
+        cursor.execute(sql)
+        datos = cursor.fetchall()
+        for dato in datos:
+            materia_prima[dato[0]] = MateriaPrima(dato[0], dato[1], dato[2])
+        db.close()
     global nombre, descripcion
     bol = True
     while bol:
@@ -868,6 +928,11 @@ def crear_materia_prima():
             nombre = input("Inserte el nombre de la materia prima: ")
             if nombre != "":
                 bol_submenu = False
+                for materia in materia_prima.values():
+                    if materia.nombre == nombre:
+                        print("La materia indicada ya existe")
+                    else:
+                        bol_submenu = False
             else:
                 print("El nombre no puede estar vacio.")
         bol_submenu = True
@@ -881,12 +946,31 @@ def crear_materia_prima():
             print("Cancelando operacion")
         else:
             materia_prima[len(materia_prima)] = MateriaPrima(len(materia_prima), nombre, descripcion)
+            db = conexion()
+            if db:
+                objeto = materia_prima[len(materia_prima) - 1]
+                cursor = db.cursor()
+                sql = """INSERT INTO materia_prima (nombre,descripcion) VALUES (%s,%s)"""
+                val = (objeto.nombre, objeto.descripcion)
+                cursor.execute(sql, val)
+                db.commit()
+                db.close()
         bol = False
 
 
 # Crear_objetos sirve para poder crear objetos
 def crear_objetos():
     global nombre, descripcion
+    objetos.clear()
+    db = conexion()
+    if db:
+        cursor = db.cursor()
+        sql = """SELECT * from objetos"""
+        cursor.execute(sql)
+        datos = cursor.fetchall()
+        for dato in datos:
+            objetos[dato[0]] = Objeto(dato[0], dato[1], dato[2])
+        db.close()
     bol = True
     while bol:
         bol_submenu = True
@@ -911,6 +995,22 @@ def crear_objetos():
             print("Añada la materia prima")
             bol_submenu = True
             while bol_submenu:
+                materia_prima.clear()
+                db = conexion()
+                if db:
+                    cursor = db.cursor()
+                    sql = """SELECT * from materia_prima"""
+                    cursor.execute(sql)
+                    datos = cursor.fetchall()
+                    for dato in datos:
+                        materia_prima[dato[0]] = MateriaPrima(dato[0], dato[1], dato[2])
+                    sql = """SELECT * from materia_objetos"""
+                    cursor.execute(sql)
+                    datos = cursor.fetchall()
+                    for dato in datos:
+                        objetos[dato[0]].ayadir_materia_prima(materia_prima[dato[1]])
+                        materia_prima[dato[1]].ayadir_objeto(objetos[dato[0]])
+                    db.close()
                 if len(materia_prima) > 0:
                     print("Materia Prima disponible")
                     for materia in materia_prima.values():
@@ -928,6 +1028,19 @@ def crear_objetos():
                                 else:
                                     objetos[objeto_id].ayadir_materia_prima(materia_prima[materia_id])
                                     materia_prima[materia_id].ayadir_objeto(objetos[objeto_id])
+                                    db = conexion()
+                                    if db:
+                                        objeto = objetos[objeto_id]
+                                        cursor = db.cursor()
+                                        sql = """INSERT INTO objetos (nombre,descripcion) VALUES (%s,%s)"""
+                                        val = (objeto.nombre, objeto.descripcion)
+                                        cursor.execute(sql, val)
+                                        db.commit()
+                                        sql = """INSERT INTO materia_objetos (objeto_id, materia_id) VALUES (%s,%s)"""
+                                        val = (objeto.id, materia_id)
+                                        cursor.execute(sql, val)
+                                        db.commit()
+                                        db.close()
                             if input(
                                     "Escriba salir si no quiere seguir añadiendo materias primas: ").lower().capitalize() == "Salir":
                                 bol_submenu = False
@@ -943,17 +1056,44 @@ def crear_objetos():
 
 # Mostrar_produccion sirve para mostrar las ordenes de produccion
 def mostrar_produccion():
+    produccion.clear()
+    objetos.clear()
+    materia_prima.clear()
+    db = conexion()
+    if db:
+        cursor = db.cursor()
+        sql = """SELECT * from Produccion"""
+        cursor.execute(sql)
+        datos = cursor.fetchall()
+        for dato in datos:
+            produccion[dato[0]] = Produccion(dato[0], dato[1], dato[2], dato[3])
+        sql = """SELECT * from objetos"""
+        cursor.execute(sql)
+        datos = cursor.fetchall()
+        for dato in datos:
+            objetos[dato[0]] = Objeto(dato[0], dato[1], dato[2])
+        sql = """SELECT * from materia_prima"""
+        cursor.execute(sql)
+        datos = cursor.fetchall()
+        for dato in datos:
+            materia_prima[dato[0]] = MateriaPrima(dato[0], dato[1], dato[2])
+        sql = """SELECT * from materia_objetos"""
+        cursor.execute(sql)
+        datos = cursor.fetchall()
+        for dato in datos:
+            objetos[dato[0]].ayadir_materia_prima(materia_prima[dato[1]])
+            materia_prima[dato[1]].ayadir_objeto(objetos[dato[0]])
+        db.close()
     if len(produccion) > 0:
-        for orden in produccion.values():
-            print("ID: " + str(orden.id))
-            print("Descripción: " + orden.descripcion)
-            print("cantidad: " + str(orden.cantidad))
-            print("Objetos")
-            print("ID: " + str(orden.objeto.id))
-            print("Nombre: " + orden.objeto.nombre)
-            print("Descripción: " + orden.objeto.descripcion)
-            print("Materia Prima")
-            for materiaprima in orden.objeto.materiales.values():
+        for producto in produccion.values():
+            print("ID: " + str(producto.id))
+            print("Descripción: " + producto.descripcion)
+            print("Cantidad: " + str(producto.cantidad))
+            print("Objeto de la orden")
+            print("ID: " + str(objetos[producto.objeto_id].id))
+            print("Nombre: " + objetos[producto.objeto_id].nombre)
+            print("Descripcion: " + objetos[producto.objeto_id].descripcion)
+            for materiaprima in objetos[producto.objeto_id].materiales.values():
                 print("ID: " + str(materiaprima.id))
                 print("Nombre: " + materiaprima.nombre)
                 print("Descripción: " + materiaprima.descripcion)
