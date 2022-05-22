@@ -1192,6 +1192,7 @@ def borrar_usuario():
             print("Nombre usuario: " + usuario.usuario)
             print("Permisos: " + usuario.permisos)
             print("Departamento: " + usuario.departamento)
+            print("")
         Nusuario = input("Escribe el nombre del usuario que quieres borrar: ")
         if usuarios.keys().__contains__(Nusuario):
             if cancelar():
