@@ -60,9 +60,7 @@ CREATE TABLE IF NOT EXISTS `Empresas` (
 DROP TABLE IF EXISTS `materia_objetos`;
 CREATE TABLE IF NOT EXISTS `materia_objetos` (
   `objeto_id` int(11) NOT NULL,
-  `materia_id` int(11) NOT NULL,
-  KEY `FK_Objetos` (`objeto_id`),
-  KEY `FK_materia` (`materia_id`)
+  `materia_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -105,8 +103,7 @@ CREATE TABLE IF NOT EXISTS `Produccion` (
   `descripcion` varchar(250) NOT NULL,
   `cantidad` int(11) NOT NULL,
   `objeto_id` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `FK_objeto_produccion` (`objeto_id`)
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -161,19 +158,6 @@ CREATE TABLE IF NOT EXISTS `ventas` (
 --
 ALTER TABLE `compras`
   ADD CONSTRAINT `FK_empresas` FOREIGN KEY (`empresa`) REFERENCES `Empresas` (`empresa`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Filtros para la tabla `materia_objetos`
---
-ALTER TABLE `materia_objetos`
-  ADD CONSTRAINT `FK_Objetos` FOREIGN KEY (`objeto_id`) REFERENCES `objetos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `FK_materia` FOREIGN KEY (`materia_id`) REFERENCES `materia_prima` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Filtros para la tabla `Produccion`
---
-ALTER TABLE `Produccion`
-  ADD CONSTRAINT `FK_objeto_produccion` FOREIGN KEY (`objeto_id`) REFERENCES `objetos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `ventas`
