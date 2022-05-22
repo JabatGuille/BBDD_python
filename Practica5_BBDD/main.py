@@ -46,11 +46,13 @@ def enum_departamento():
 
 # Cancelar sirve para poder cancelar en cualquier momento devuelve un booleano
 def cancelar():
-    cancelar = input("Si desea cancelar la operacion escriba Cancelar: ").lower()
-    if cancelar == "cancelar":
-        return True
-    else:
-        return False
+    bol = True
+    while bol:
+        cancelar = input("Si desea cancelar la operacion escriba Cancelar: ").lower()
+        if cancelar == "cancelar":
+            return True
+        else:
+            return False
 
 
 # Enum_permisos funciona para poder elegir los permisos del usuario y devuelve el permiso
@@ -173,29 +175,31 @@ def menu_login():
             menu = int(input("Escriba el numero de la opcion que quiere elegir: "))
             if menu < 1 or menu > 3:
                 print("Esa opcion no esta en el menu.")
+            else:
+                if menu == 1:
+                    login_BBDD()
+                    if usuario_logueado.permisos == "Admin" or usuario_logueado.permisos == "Jefe":
+                        menu_completo()
+                    elif usuario_logueado.permisos == "Empleado":
+                        if usuario_logueado.departamento == "Compras":
+                            menu_compras()
+                        elif usuario_logueado.departamento == "Ventas":
+                            menu_ventas()
+                        elif usuario_logueado.departamento == "Produccion":
+                            menu_produccion()
+                        elif usuario_logueado.departamento == "RRHH":
+                            menu_RRHH()
+                elif menu == 2:
+                    departamento = enum_departamento()
+                    usuario_logueado = Usuario('temporal', 'Lectura', departamento)
+                    menu_lecturas()
+                elif menu == 3:
+                    print("Guardando los datos, espere un momento.")
+                    print("Saliendo del programa.")
+                    bol_menu_login = False
         except ValueError:
             print("No ha elegido un numero.")
-        if menu == 1:
-            login_BBDD()
-            if usuario_logueado.permisos == "Admin" or usuario_logueado.permisos == "Jefe":
-                menu_completo()
-            elif usuario_logueado.permisos == "Empleado":
-                if usuario_logueado.departamento == "Compras":
-                    menu_compras()
-                elif usuario_logueado.departamento == "Ventas":
-                    menu_ventas()
-                elif usuario_logueado.departamento == "Produccion":
-                    menu_produccion()
-                elif usuario_logueado.departamento == "RRHH":
-                    menu_RRHH()
-        elif menu == 2:
-            departamento = enum_departamento()
-            usuario_logueado = Usuario('temporal', 'Lectura', departamento)
-            menu_lecturas()
-        elif menu == 3:
-            print("Guardando los datos, espere un momento.")
-            print("Saliendo del programa.")
-            bol_menu_login = False
+
 
 
 def cargar_empresas_BBDD():
@@ -226,6 +230,8 @@ def crear_empresa():
                 sql = """INSERT INTO Empresas VALUES (%s)"""
                 val = (empresa)
                 cursor.execute(sql, val)
+                db.commit()
+                db.close()
             empresas[empresa] = Empresa(empresa)
             bol_menu = False
 
@@ -303,23 +309,25 @@ def menu_compras():
             menu = int(input("Escriba el numero de la opcion que quiere elegir: "))
             if menu < 1 or menu > 7:
                 print("Esa opcion no esta en el menu.")
+            else:
+                if menu == 1:
+                    crear_orden("compra")
+                elif menu == 2:
+                    editar_orden_compra()
+                elif menu == 3:
+                    anular_orden_compra()
+                elif menu == 4:
+                    crear_empresa()
+                elif menu == 5:
+                    mostrar_ordenes_compra()
+                elif menu == 6:
+                    crear_graficos("Compras")
+                elif menu == 7:
+                    print("Moviendo al menu principal")
+                    bol_menu_compras = False
         except ValueError:
             print("No ha elegido un numero.")
-        if menu == 1:
-            crear_orden("compra")
-        elif menu == 2:
-            editar_orden_compra()
-        elif menu == 3:
-            anular_orden_compra()
-        elif menu == 4:
-            crear_empresa()
-        elif menu == 5:
-            mostrar_ordenes_compra()
-        elif menu == 6:
-            crear_graficos("Compras")
-        elif menu == 7:
-            print("Moviendo al menu principal")
-            bol_menu_compras = False
+
 
 
 # Editar_orden_compra sirve para editar las ordenes de compra
@@ -342,71 +350,62 @@ def editar_orden_compra():
     else:
         bol = True
         while bol:
-            cont = 0
             for compra in compras.values():
-                if compra.estado != "Cancelada":
-                    print("ID: " + str(compra.id))
-                    print("Descripcion: " + compra.descripcion)
-                    print("Estado: " + compra.estado)
-                    print("Empresa en la orden de compra.")
-                    print(compra.proveedor)
-                else:
-                    cont += 1
-            if cont != len(compras):
-                try:
-                    compra_id = int(input("Escriba el id de la compra que quiere editar: "))
-                except ValueError:
-                    print("Debe escribir un numero")
+                print("ID: " + str(compra.id))
+                print("Descripcion: " + compra.descripcion)
+                print("Estado: " + compra.estado)
+                print("Empresa en la orden de compra.")
+                print(compra.proveedor)
+            try:
+                compra_id = int(input("Escriba el id de la compra que quiere editar: "))
                 if compras.keys().__contains__(compra_id):
-                    if compras[compra_id].estado == "Cancelada":
-                        print("Ese id no es valido")
-                    else:
-                        bol = False
+                    bol = False
                 else:
                     print("El id seleccionado no existe")
-                print("¿Quiere cambiar la descripcion?")
-                opcion = input("Escriba S: ").upper()
-                if opcion == "S":
-                    bol = True
-                    while bol:
-                        descripcion = input("Escriba la descripcion: ")
-                        if descripcion != "":
-                            compras[compra_id].descripcion = descripcion
-                            db = conexion()
-                            cursor = db.cursor()
-                            val = (descripcion, compra_id)
-                            sql = """UPDATE compras set descripcion=%s where id=%s"""
-                            cursor.execute(sql, val)
-                            db.commit()
-                            db.close()
-                            bol = False
-                        else:
-                            print("La descripcion no puede estar vacia")
-                print("¿Quiere cambiar el estado?")
-                opcion = input("Escriba S: ").upper()
-                if opcion == "S":
-                    estado = enum_estado("compra")
-                    compras[compra_id].estado = estado
+            except ValueError:
+                print("Debe escribir un numero")
+        print("¿Quiere cambiar la descripcion?")
+        opcion = input("Escriba S: ").upper()
+        if opcion == "S":
+            bol = True
+            while bol:
+                descripcion = input("Escriba la descripcion: ")
+                if descripcion != "":
+                    compras[compra_id].descripcion = descripcion
                     db = conexion()
-                    if db:
-                        cursor = db.cursor()
-                        val = (estado, compra_id)
-                        sql = """UPDATE compras set estado=%s where id=%s"""
-                        cursor.execute(sql, val)
-                        db.commit()
-                        db.close()
-                print("¿Quiere añadir o quitar compradores?")
-                opcion = input("Escriba S: ").upper()
-                if opcion == "S":
-                    bol_submenu = True
-                    while bol_submenu:
-                        print("\n-1 cambiar comprador. \n-2 Terminar de editar la orden de compra.")
-                        try:
-                            menu = int(input("Escriba el numero de la opcion que quiere elegir: "))
-                            if menu < 1 or menu > 2:
-                                print("Esa opcion no esta en el menu.")
-                        except ValueError:
-                            print("No ha elegido un numero.")
+                    cursor = db.cursor()
+                    val = (descripcion, compra_id)
+                    sql = """UPDATE compras set descripcion=%s where id=%s"""
+                    cursor.execute(sql, val)
+                    db.commit()
+                    db.close()
+                    bol = False
+                else:
+                    print("La descripcion no puede estar vacia")
+        print("¿Quiere cambiar el estado?")
+        opcion = input("Escriba S: ").upper()
+        if opcion == "S":
+            estado = enum_estado("compra")
+            compras[compra_id].estado = estado
+            db = conexion()
+            if db:
+                cursor = db.cursor()
+                val = (estado, compra_id)
+                sql = """UPDATE compras set estado=%s where id=%s"""
+                cursor.execute(sql, val)
+                db.commit()
+                db.close()
+        print("¿Quiere añadir o quitar compradores?")
+        opcion = input("Escriba S: ").upper()
+        if opcion == "S":
+            bol_submenu = True
+            while bol_submenu:
+                print("\n-1 cambiar comprador. \n-2 Terminar de editar la orden de compra.")
+                try:
+                    menu = int(input("Escriba el numero de la opcion que quiere elegir: "))
+                    if menu < 1 or menu > 2:
+                        print("Esa opcion no esta en el menu.")
+                    else:
                         if menu == 1:
                             bol = True
                             while bol:
@@ -420,34 +419,33 @@ def editar_orden_compra():
                                         print("La empresa ya se encuentra en la orden de compra")
                                     else:
                                         bol = False
+                                        if cancelar():
+                                            print("Cancelando operacion.")
+                                        else:
+                                            Nempresa_antigua = compras[compra_id].proveedor
+                                            empresas[Nempresa_antigua].quitar_compra(compra_id)
+                                            compras[compra_id].proveedor = Nempresa
+                                            empresas[Nempresa].ayadir_compras(compras[compra_id])
+                                            db = conexion()
+                                            if db:
+                                                cursor = db.cursor()
+                                                val = (Nempresa, compra_id)
+                                                sql = """UPDATE compras set empresa=%s where id=%s"""
+                                                cursor.execute(sql, val)
+                                                db.commit()
+                                                db.close()
                                 elif Nempresa.lower().capitalize() == "Salir":
                                     print("Saliendo")
                                     bol = False
                                 else:
                                     print("La empresa no se encuentra en la lista")
-                            if Nempresa.lower().capitalize() != "Salir":
-                                if cancelar():
-                                    print("Cancelando operacion.")
-                                else:
-                                    Nempresa_antigua = compras[compra_id].proveedor
-                                    empresas[Nempresa_antigua].quitar_compra(compra_id)
-                                    compras[compra_id].proveedor = Nempresa
-                                    empresas[Nempresa].ayadir_compras(compras[compra_id])
-                                    db = conexion()
-                                    if db:
-                                        cursor = db.cursor()
-                                        val = (Nempresa, compra_id)
-                                        sql = """UPDATE compras set empresa=%s where id=%s"""
-                                        cursor.execute(sql, val)
-                                        db.commit()
-                                        db.close()
                         if menu == 2:
                             print("Saliendo.")
                             bol_submenu = False
-            else:
-                print("No hay ordenes de compra para editar.")
+                except ValueError:
+                    print("No ha elegido un numero.")
+
             print("Terminando operacion.")
-            bol = False
 
 
 # Anular_orden_compra sirve para anular las ordenes de compra
@@ -475,24 +473,26 @@ def anular_orden_compra():
         if len(compras) != 0:
             try:
                 compra_id = int(input("Escriba el id de la compra que quiere anular: "))
+                if compras.keys().__contains__(compra_id):
+                    bol = False
+                    if cancelar():
+                        print("Cancelando operacion")
+                    else:
+                        db = conexion()
+                        if db:
+                            cursor = db.cursor()
+                            val = (Estado.CANCELADA.value, compra_id)
+                            sql = """UPDATE compras SET estado=%s WHERE id=%s"""
+                            cursor.execute(sql, val)
+                            db.commit()
+                            db.close()
+                            compras[compra_id].estado = Estado.CANCELADA.value
+                else:
+                    print("El id seleccionado no existe")
+
             except ValueError:
                 print("Debe escribir un numero")
-            if compras.keys().__contains__(compra_id):
-                bol = False
-            else:
-                print("El id seleccionado no existe")
-            if cancelar():
-                print("Cancelando operacion")
-            else:
-                db = conexion()
-                if db:
-                    cursor = db.cursor()
-                    val = (Estado.CANCELADA.value, compra_id)
-                    sql = """UPDATE compras SET estado=%s WHERE id=%s"""
-                    cursor.execute(sql, val)
-                    db.commit()
-                    db.close()
-                    compras[compra_id].estado = Estado.CANCELADA.value
+
         else:
             bol = False
             print("No hay ordendes de compra para poder anular")
@@ -534,23 +534,25 @@ def menu_ventas():
             menu = int(input("Escriba el numero de la opcion que quiere elegir: "))
             if menu < 1 or menu > 7:
                 print("Esa opcion no esta en el menu.")
+            else:
+                if menu == 1:
+                    crear_orden("venta")
+                elif menu == 2:
+                    editar_orden_venta()
+                elif menu == 3:
+                    anular_orden_venta()
+                elif menu == 4:
+                    crear_empresa()
+                elif menu == 5:
+                    mostrar_ordenes_venta()
+                elif menu == 6:
+                    crear_graficos("Ventas")
+                elif menu == 7:
+                    print("Moviendo al menu principal")
+                    bol_menu_ventas = False
         except ValueError:
             print("No ha elegido un numero.")
-        if menu == 1:
-            crear_orden("venta")
-        elif menu == 2:
-            editar_orden_venta()
-        elif menu == 3:
-            anular_orden_venta()
-        elif menu == 4:
-            crear_empresa()
-        elif menu == 5:
-            mostrar_ordenes_venta()
-        elif menu == 6:
-            crear_graficos("Ventas")
-        elif menu == 7:
-            print("Moviendo al menu principal")
-            bol_menu_ventas = False
+
 
 
 # Editar_orden_venta sirve para editar las ordenes de venta
@@ -567,7 +569,7 @@ def editar_orden_venta():
         for dato in datos:
             ventas[dato[0]] = Ventas(dato[0], dato[1], dato[2], dato[3])
         db.close()
-    if len(compras) == 0:
+    if len(ventas) == 0:
         print("No hay ordenes de venta, redirigiendo a la creacion de ordendes")
         crear_orden("venta")
     else:
@@ -579,42 +581,43 @@ def editar_orden_venta():
                 print("Estado: " + venta.estado)
                 print("Empresa en la orden de compra.")
                 print(venta.vendedor)
-                try:
-                    venta_id = int(input("Escriba el id de la venta que quiere editar: "))
-                except ValueError:
-                    print("Debe escribir un numero")
-                if compras.keys().__contains__(venta_id):
+            try:
+                venta_id = int(input("Escriba el id de la venta que quiere editar: "))
+                if ventas.keys().__contains__(venta_id):
                     bol = False
                 else:
                     print("El id seleccionado no existe")
-                print("¿Quiere cambiar la descripcion?")
-                opcion = input("Escriba S: ").upper()
-                if opcion == "S":
-                    bol = True
-                    while bol:
-                        descripcion = input("Escriba la descripcion: ")
-                        if descripcion != "":
-                            ventas[venta_id].descripcion = descripcion
-                            db = conexion()
-                            cursor = db.cursor()
-                            val = (descripcion, compra_id)
-                            sql = """UPDATE ventas set descripcion=%s where id=%s"""
-                            cursor.execute(sql, val)
-                            db.commit()
-                            db.close()
-                            bol = False
-                        else:
-                            print("La descripcion no puede estar vacia")
+            except ValueError:
+                print("Debe escribir un numero")
+        print("¿Quiere cambiar la descripcion?")
+        opcion = input("Escriba S: ").upper()
+        if opcion == "S":
+            bol = True
+            while bol:
+                descripcion = input("Escriba la descripcion: ")
+                if descripcion != "":
+                    ventas[venta_id].descripcion = descripcion
+                    db = conexion()
+                    if db:
+                        cursor = db.cursor()
+                        val = (descripcion, venta_id)
+                        sql = """UPDATE ventas set descripcion=%s where id=%s"""
+                        cursor.execute(sql, val)
+                        db.commit()
+                        db.close()
+                    bol = False
+                else:
+                    print("La descripcion no puede estar vacia")
                 print("¿Quiere cambiar el estado?")
                 opcion = input("Escriba S: ").upper()
                 if opcion == "S":
-                    estado = enum_estado("compra")
+                    estado = enum_estado("venta")
                     ventas[venta_id].estado = estado
                     db = conexion()
                     if db:
                         cursor = db.cursor()
-                        val = (estado, compra_id)
-                        sql = """UPDATE ventasset estado=%s where id=%s"""
+                        val = (estado, venta_id)
+                        sql = """UPDATE ventas set estado=%s where id=%s"""
                         cursor.execute(sql, val)
                         db.commit()
                         db.close()
@@ -628,57 +631,47 @@ def editar_orden_venta():
                             menu = int(input("Escriba el numero de la opcion que quiere elegir: "))
                             if menu < 1 or menu > 2:
                                 print("Esa opcion no esta en el menu.")
+                            else:
+                                if menu == 1:
+                                    bol = True
+                                    while bol:
+                                        empresas.clear()
+                                        cargar_empresas_BBDD()
+                                        print("Empresas a seleccionar.")
+                                        for empresa in empresas.values():
+                                            print("Nombre: " + empresa.empresa)
+                                        Nempresa = input(
+                                            "Escriba el nombre de la empresa, escriba Salir si quiere salir: ")
+                                        if empresas.keys().__contains__(Nempresa):
+                                            if ventas[venta_id].proveedor == Nempresa:
+                                                print("La empresa ya se encuentra en la orden de compra")
+                                            else:
+                                                bol = False
+                                                if cancelar():
+                                                    print("Cancelando operacion.")
+                                                else:
+                                                    Nempresa_antigua = ventas[venta_id].proveedor
+                                                    empresas[Nempresa_antigua].quitar_venta(compra_id)
+                                                    ventas[venta_id].proveedor = Nempresa
+                                                    empresas[Nempresa].ayadir_ventas(compras[compra_id])
+                                                    db = conexion()
+                                                    if db:
+                                                        cursor = db.cursor()
+                                                        val = (Nempresa, venta_id)
+                                                        sql = """UPDATE ventas set empresa=%s where id=%s"""
+                                                        cursor.execute(sql, val)
+                                                        db.commit()
+                                                        db.close()
+                                        elif Nempresa.lower().capitalize() == "Salir":
+                                            print("Saliendo")
+                                            bol = False
+                                        else:
+                                            print("La empresa no se encuentra en la lista")
+                                if menu == 2:
+                                    print("Saliendo.")
+                                    bol_submenu = False
                         except ValueError:
                             print("No ha elegido un numero.")
-                        if menu == 1:
-                            bol = True
-                            while bol:
-                                empresas.clear()
-                                db = conexion()
-                                if db:
-                                    cursor = db.cursor()
-                                    val = Estado.CANCELADA.value
-                                    sql = """SELECT * from empresas"""
-                                    cursor.execute(sql, val)
-                                    datos = cursor.fetchall()
-                                    for dato in datos:
-                                        empresas[dato[0]] = Empresa(dato[0])
-                                    db.close()
-                                print("Empresas a seleccionar.")
-                                for empresa in empresas.values():
-                                    print("Nombre: " + empresa.empresa)
-                                Nempresa = input("Escriba el nombre de la empresa, escriba Salir si quiere salir: ")
-                                if empresas.keys().__contains__(Nempresa):
-                                    if ventas[venta_id].proveedor == Nempresa:
-                                        print("La empresa ya se encuentra en la orden de compra")
-                                    else:
-                                        bol = False
-                                elif Nempresa.lower().capitalize() == "Salir":
-                                    print("Saliendo")
-                                    bol = False
-                                else:
-                                    print("La empresa no se encuentra en la lista")
-                            if Nempresa.lower().capitalize() != "Salir":
-                                if cancelar():
-                                    print("Cancelando operacion.")
-                                else:
-                                    Nempresa_antigua = ventas[venta_id].proveedor
-                                    empresas[Nempresa_antigua].quitar_venta(compra_id)
-                                    ventas[venta_id].proveedor = Nempresa
-                                    empresas[Nempresa].ayadir_ventas(compras[compra_id])
-                                    db = conexion()
-                                    if db:
-                                        cursor = db.cursor()
-                                        val = (Nempresa, venta_id)
-                                        sql = """UPDATE ventas set empresa=%s where id=%s"""
-                                        cursor.execute(sql, val)
-                                        db.commit()
-                                        db.close()
-                        if menu == 2:
-                            print("Saliendo.")
-                            bol_submenu = False
-            else:
-                print("No hay ordenes de venta para editar.")
             print("Terminando operacion.")
             bol = False
 
@@ -708,23 +701,23 @@ def anular_orden_venta():
         if len(compras) == 0:
             try:
                 venta_id = int(input("Escriba el id de la venta que quiere anular: "))
+                if ventas.keys().__contains__(venta_id):
+                    bol = False
+                    if cancelar():
+                        print("Cancelando operacion")
+                    else:
+                        if db:
+                            cursor = db.cursor()
+                            val = (Estado.CANCELADA.value, venta_id)
+                            sql = """UPDATE ventas set estado=%s where id=%s"""
+                            cursor.execute(sql, val)
+                            db.commit()
+                            db.close()
+                            ventas[venta_id].estado = Estado.CANCELADA.value
+                else:
+                    print("El id seleccionado no existe")
             except ValueError:
                 print("Debe escribir un numero")
-            if ventas.keys().__contains__(venta_id):
-                bol = False
-            else:
-                print("El id seleccionado no existe")
-            if cancelar():
-                print("Cancelando operacion")
-            else:
-                if db:
-                    cursor = db.cursor()
-                    val = (Estado.CANCELADA.value, venta_id)
-                    sql = """UPDATE ventas set estado=%s where id=%s"""
-                    cursor.execute(sql, val)
-                    db.commit()
-                    db.close()
-                    ventas[venta_id].estado = Estado.CANCELADA.value
         else:
             bol = False
             print("No hay ordendes de venta para poder anular")
@@ -766,23 +759,25 @@ def menu_produccion():
             menu = int(input("Escriba el numero de la opcion que quiere elegir: "))
             if menu < 1 or menu > 3:
                 print("Esa opcion no esta en el menu.")
+            else:
+                if menu == 1:
+                    crear_orden_produccion()
+                elif menu == 2:
+                    borrar_orden_produccion()
+                elif menu == 3:
+                    crear_materia_prima()
+                elif menu == 4:
+                    crear_objetos()
+                elif menu == 5:
+                    mostrar_produccion()
+                elif menu == 6:
+                    crear_graficos("Produccion")
+                elif menu == 7:
+                    print("Moviendo al menu principal")
+                    bol_menu_produccion = False
         except ValueError:
             print("No ha elegido un numero.")
-        if menu == 1:
-            crear_orden_produccion()
-        elif menu == 2:
-            borrar_orden_produccion()
-        elif menu == 3:
-            crear_materia_prima()
-        elif menu == 4:
-            crear_objetos()
-        elif menu == 5:
-            mostrar_produccion()
-        elif menu == 6:
-            crear_graficos("Produccion")
-        elif menu == 7:
-            print("Moviendo al menu principal")
-            bol_menu_produccion = False
+
 
 
 # Crear_orden_produccion sirve para crear las ordenes de produccion
@@ -828,23 +823,23 @@ def crear_orden_produccion():
                     objeto_id = int(input("Inserte el id del objeto que quiere añadir: "))
                     if objetos.keys().__contains__(objeto_id):
                         bol_submenu = False
+                        if cancelar():
+                            print("Cancelando operación.")
+                        else:
+                            produccion[len(produccion)] = Produccion(len(produccion), descripcion, cantidad, objeto_id)
+                            db = conexion()
+                            if db:
+                                objeto = produccion[len(produccion) - 1]
+                                cursor = db.cursor()
+                                sql = """INSERT INTO Produccion (descripcion,cantidad,objeto_id) VALUES (%s,%s,%s)"""
+                                val = (objeto.descripcion, objeto.cantidad, objeto.objeto.id)
+                                cursor.execute(sql, val)
+                                db.commit()
+                                db.close()
                     else:
                         print("El id no esta en la lista")
                 except ValueError:
                     print("No has escrito un id correcto")
-            if cancelar():
-                print("Cancelando operación.")
-            else:
-                produccion[len(produccion)] = Produccion(len(produccion), descripcion, cantidad, objeto_id)
-                db = conexion()
-                if db:
-                    objeto = produccion[len(produccion) - 1]
-                    cursor = db.cursor()
-                    sql = """INSERT INTO Produccion (descripcion,cantidad,objeto_id) VALUES (%s,%s,%s)"""
-                    val = (objeto.descripcion, objeto.cantidad, objeto.objeto.id)
-                    cursor.execute(sql, val)
-                    db.commit()
-                    db.close()
             opcion = input("Quiere seguir creando ordenes de produccion, escriba S: ")
             if opcion.upper() != "S":
                 bol = False
@@ -1107,17 +1102,18 @@ def menu_RRHH():
             menu = int(input("Escriba el numero de la opcion que quiere elegir: "))
             if menu < 1 or menu > 4:
                 print("Esa opcion no esta en el menu.")
+            else:
+                if menu == 1:
+                    mostrar_empleados()
+                elif menu == 2:
+                    registro_BBDD()
+                elif menu == 3:
+                    borrar_usuario()
+                elif menu == 4:
+                    print("Moviendo al menu principal")
+                    bol_menu_RRHH = False
         except ValueError:
             print("No ha elegido un numero.")
-        if menu == 1:
-            mostrar_empleados()
-        elif menu == 2:
-            registro_BBDD()
-        elif menu == 3:
-            borrar_usuario()
-        elif menu == 4:
-            print("Moviendo al menu principal")
-            bol_menu_RRHH = False
 
 
 # Mostrar_empleados muestra todos los empleados de la empresa
@@ -1194,26 +1190,28 @@ def menu_completo():
             menu = int(input("Escriba el numero de la opcion que quiere elegir: "))
             if menu < 1 or menu > 6:
                 print("Esa opcion no esta en el menu.")
+            else:
+                if menu == 1:
+                    print("Saliendo al menu compras")
+                    menu_compras()
+                elif menu == 2:
+                    print("Saliendo al menu ventas")
+                    menu_ventas()
+                elif menu == 3:
+                    print("Saliendo al menu produccion")
+                    menu_produccion()
+                elif menu == 4:
+                    print("Saliendo al menu RRHH")
+                    menu_RRHH()
+                elif menu == 5:
+                    print("Crear usuarios")
+                    registro_BBDD()
+                elif menu == 6:
+                    print("Saliendo al menu login")
+                    bol_menu_completo = False
         except ValueError:
             print("No ha elegido un numero.")
-        if menu == 1:
-            print("Saliendo al menu compras")
-            menu_compras()
-        elif menu == 2:
-            print("Saliendo al menu ventas")
-            menu_ventas()
-        elif menu == 3:
-            print("Saliendo al menu produccion")
-            menu_produccion()
-        elif menu == 4:
-            print("Saliendo al menu RRHH")
-            menu_RRHH()
-        elif menu == 5:
-            print("Crear usuarios")
-            registro_BBDD()
-        elif menu == 6:
-            print("Saliendo al menu login")
-            bol_menu_completo = False
+
 
 
 # Menu_lecturas es el menu que se muestra a los usuarios con permisos de lectura
@@ -1332,7 +1330,6 @@ def conexion():
 # Funcion para poder hacer login usando la  BBDD
 def login_BBDD():
     global usuario, clave, usuario_logueado
-
     usuario = input("Indique el usuario: ")
     clave = input("Indique la clave del usuario: ")
     clave = hashlib.sha224(clave.encode('utf-8')).hexdigest()
