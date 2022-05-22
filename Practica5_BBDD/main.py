@@ -198,21 +198,24 @@ def menu_login():
             bol_menu_login = False
 
 
+def cargar_empresas_BBDD():
+    empresas.clear()
+    db = conexion()
+    if db:
+        cursor = db.cursor()
+        sql = """SELECT * from Empresas"""
+        cursor.execute(sql)
+        datos = cursor.fetchall()
+        for dato in datos:
+            empresas[dato[0]] = Empresa(dato[0])
+        db.close()
+
+
 # Crear_empresa sirve para poder añadir empresas
 def crear_empresa():
     bol_menu = True
     while bol_menu:
-        empresas.clear()
-        db = conexion()
-        if db:
-            cursor = db.cursor()
-            val = Estado.CANCELADA.value
-            sql = """SELECT * from empresas"""
-            cursor.execute(sql, val)
-            datos = cursor.fetchall()
-            for dato in datos:
-                empresas[dato[0]] = Empresa(dato[0])
-            db.close()
+        cargar_empresas_BBDD()
         empresa = input("Escriba el nombre de la empresa: ")
         if empresas.keys().__contains__(empresa):
             print("La empresa ya exite")
@@ -220,7 +223,7 @@ def crear_empresa():
             db = conexion()
             if db:
                 cursor = db.cursor()
-                sql = """INSERT INTO Empresas empresa VALUES (%s)"""
+                sql = """INSERT INTO Empresas VALUES (%s)"""
                 val = (empresa)
                 cursor.execute(sql, val)
             empresas[empresa] = Empresa(empresa)
@@ -230,6 +233,7 @@ def crear_empresa():
 # Crear_orden sirve para poder crear una orden de venta
 def crear_orden(objeto):
     global Nempresa, bol, descripcion, empresa
+    cargar_empresas_BBDD()
     if len(empresas) == 0:
         print("No existen empresas debe añadir")
         crear_empresa()
@@ -265,7 +269,7 @@ def crear_orden(objeto):
                 compras[len(compras)] = Compras(len(compras), descripcion, estado, Nempresa)
                 empresas[Nempresa].ayadir_compras(compras[len(compras) - 1])
                 compra = compras[len(compras) - 1]
-                guardar_orden_BBDD('venta', compra)
+                guardar_orden_BBDD('compra', compra)
             opcion = input("Si quiere seguir creando ordendes de compra escriba S: ").upper()
             if opcion != "S":
                 print("Saliendo al menu")
@@ -280,7 +284,7 @@ def guardar_orden_BBDD(departamento, objeto):
             val = (objeto.descripcion, objeto.estado, objeto.vendedor)
             cursor.execute(sql, val)
         else:
-            sql = """INSERT INTO compras (usuario,clave,permisos,departamento,empresa) VALUES (%s,%s,%s)"""
+            sql = """INSERT INTO compras (descripcion,estado,empresa) VALUES (%s,%s,%s)"""
             val = (objeto.descripcion, objeto.estado, objeto.proveedor)
             cursor.execute(sql, val)
         db.commit()
@@ -406,17 +410,7 @@ def editar_orden_compra():
                         if menu == 1:
                             bol = True
                             while bol:
-                                empresas.clear()
-                                db = conexion()
-                                if db:
-                                    cursor = db.cursor()
-                                    val = Estado.CANCELADA.value
-                                    sql = """SELECT * from empresas"""
-                                    cursor.execute(sql, val)
-                                    datos = cursor.fetchall()
-                                    for dato in datos:
-                                        empresas[dato[0]] = Empresa(dato[0])
-                                    db.close()
+                                cargar_empresas_BBDD()
                                 print("Empresas a seleccionar.")
                                 for empresa in empresas.values():
                                     print("Nombre: " + empresa.empresa)
@@ -471,14 +465,14 @@ def anular_orden_compra():
             datos = cursor.fetchall()
             for dato in datos:
                 compras[dato[0]] = Compras(dato[0], dato[1], dato[2], dato[3])
-                db.close()
+            db.close()
         for compra in compras.values():
             print("ID: " + str(compra.id))
             print("Descripcion: " + compra.descripcion)
             print("Estado: " + compra.estado)
             print("Empresa en la compra.")
             print(compra.proveedor)
-        if len(compras) == 0:
+        if len(compras) != 0:
             try:
                 compra_id = int(input("Escriba el id de la compra que quiere anular: "))
             except ValueError:
@@ -490,10 +484,11 @@ def anular_orden_compra():
             if cancelar():
                 print("Cancelando operacion")
             else:
+                db = conexion()
                 if db:
                     cursor = db.cursor()
                     val = (Estado.CANCELADA.value, compra_id)
-                    sql = """UPDATE compras set estado=%s where id=%s"""
+                    sql = """UPDATE compras SET estado=%s WHERE id=%s"""
                     cursor.execute(sql, val)
                     db.commit()
                     db.close()
