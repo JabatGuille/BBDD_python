@@ -1,10 +1,13 @@
+import csv
 import hashlib
+import os
 import random
 import pymysql
 
 import matplotlib.pyplot as plt
 
 from Clases.Compras import Compras
+from Clases.Conexion import Conexion
 from Clases.Empresa import Empresa
 from Clases.MateriaPrima import MateriaPrima
 from Clases.Objeto import Objeto
@@ -23,6 +26,7 @@ materia_prima = {}
 objetos = {}
 compras = {}
 ventas = {}
+datos_conexion = Conexion("", "", "", "", 0)
 
 
 # Enum_departamentos funciona para poder elegir el departamento del usuario y devuelve el departamento
@@ -165,6 +169,7 @@ def guardar_usuarios_BBDD(val):
 # Menu_login es el menu donde puedes acceder al login, registrar un usuario temporal o terminar la aplicacion
 def menu_login():
     global menu, departamento, usuario_logueado
+    comprobar_csv()
     usuario_logueado = Usuario("", "", "")
     bol_menu_login = True
     while bol_menu_login:
@@ -199,7 +204,6 @@ def menu_login():
                     bol_menu_login = False
         except ValueError:
             print("No ha elegido un numero.")
-
 
 
 def cargar_empresas_BBDD():
@@ -332,7 +336,6 @@ def menu_compras():
                     bol_menu_compras = False
         except ValueError:
             print("No ha elegido un numero.")
-
 
 
 # Editar_orden_compra sirve para editar las ordenes de compra
@@ -559,7 +562,6 @@ def menu_ventas():
             print("No ha elegido un numero.")
 
 
-
 # Editar_orden_venta sirve para editar las ordenes de venta
 def editar_orden_venta():
     global venta_id, menu, Nempresa
@@ -782,7 +784,6 @@ def menu_produccion():
                     bol_menu_produccion = False
         except ValueError:
             print("No ha elegido un numero.")
-
 
 
 # Crear_orden_produccion sirve para crear las ordenes de produccion
@@ -1248,7 +1249,6 @@ def menu_completo():
             print("No ha elegido un numero.")
 
 
-
 # Menu_lecturas es el menu que se muestra a los usuarios con permisos de lectura
 def menu_lecturas():
     if usuario_logueado.departamento == "Compras":
@@ -1354,8 +1354,10 @@ def bucle_graficos(nombre, arrays):
 
 # Funcion que sirve para hacer la conexion con la BBDD
 def conexion():
+    global datos_conexion
     try:
-        db = pymysql.connect(host="127.0.0.1", user='root', password='root', db='python', port=3306)
+        db = pymysql.connect(host=datos_conexion.host, user=datos_conexion.user, password=datos_conexion.password,
+                             db=datos_conexion.db, port=datos_conexion.port)
         return db
     except Exception:
         print("Error de conexion con la BBDD, contacte con el admministrador.")
@@ -1378,6 +1380,26 @@ def login_BBDD():
         if cursor.rowcount != 0:
             usuario_logueado = Usuario(dato[0], dato[1], dato[2])
         db.close()
+
+
+def comprobar_csv():
+    global datos_conexion
+    fichero = "BBDD.csv"
+    try:
+        with open(fichero, 'r') as f:
+            if os.stat(fichero).st_size == 0:
+                bol_fichero = True
+            else:
+                bol_fichero = False
+    except FileNotFoundError as e:
+        bol_fichero = True
+    if bol_fichero:
+        print("Falta el archivo de configuración de la BBDD.")
+    else:
+        with open(fichero) as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                datos_conexion = Conexion(str(row['host']), str(row['user']), str(row['password']), str(row['db']), int(row['port']))
 
 
 menu_login()
