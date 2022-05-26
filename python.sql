@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: mysql
--- Tiempo de generación: 07-04-2022 a las 18:00:40
+-- Tiempo de generación: 26-05-2022 a las 19:17:53
 -- Versión del servidor: 5.7.28
 -- Versión de PHP: 8.0.15
 
@@ -29,14 +29,11 @@ USE `python`;
 -- Estructura de tabla para la tabla `compras`
 --
 
-DROP TABLE IF EXISTS `compras`;
-CREATE TABLE IF NOT EXISTS `compras` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `compras` (
+  `id` int(11) NOT NULL,
   `descripcion` varchar(250) NOT NULL,
   `estado` varchar(50) NOT NULL,
-  `empresa` varchar(100) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `FK_empresas` (`empresa`)
+  `empresa` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -45,10 +42,8 @@ CREATE TABLE IF NOT EXISTS `compras` (
 -- Estructura de tabla para la tabla `Empresas`
 --
 
-DROP TABLE IF EXISTS `Empresas`;
-CREATE TABLE IF NOT EXISTS `Empresas` (
-  `empresa` varchar(100) NOT NULL,
-  PRIMARY KEY (`empresa`)
+CREATE TABLE `Empresas` (
+  `empresa` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -57,8 +52,7 @@ CREATE TABLE IF NOT EXISTS `Empresas` (
 -- Estructura de tabla para la tabla `materia_objetos`
 --
 
-DROP TABLE IF EXISTS `materia_objetos`;
-CREATE TABLE IF NOT EXISTS `materia_objetos` (
+CREATE TABLE `materia_objetos` (
   `objeto_id` int(11) NOT NULL,
   `materia_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -69,12 +63,10 @@ CREATE TABLE IF NOT EXISTS `materia_objetos` (
 -- Estructura de tabla para la tabla `materia_prima`
 --
 
-DROP TABLE IF EXISTS `materia_prima`;
-CREATE TABLE IF NOT EXISTS `materia_prima` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `materia_prima` (
+  `id` int(11) NOT NULL,
   `nombre` varchar(50) NOT NULL,
-  `descripcion` varchar(250) NOT NULL,
-  PRIMARY KEY (`id`)
+  `descripcion` varchar(250) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -83,12 +75,10 @@ CREATE TABLE IF NOT EXISTS `materia_prima` (
 -- Estructura de tabla para la tabla `objetos`
 --
 
-DROP TABLE IF EXISTS `objetos`;
-CREATE TABLE IF NOT EXISTS `objetos` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `objetos` (
+  `id` int(11) NOT NULL,
   `nombre` varchar(50) NOT NULL,
-  `descripcion` varchar(250) NOT NULL,
-  PRIMARY KEY (`id`)
+  `descripcion` varchar(250) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -97,13 +87,11 @@ CREATE TABLE IF NOT EXISTS `objetos` (
 -- Estructura de tabla para la tabla `Produccion`
 --
 
-DROP TABLE IF EXISTS `Produccion`;
-CREATE TABLE IF NOT EXISTS `Produccion` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `Produccion` (
+  `id` int(11) NOT NULL,
   `descripcion` varchar(250) NOT NULL,
   `cantidad` int(11) NOT NULL,
-  `objeto_id` int(11) NOT NULL,
-  PRIMARY KEY (`id`)
+  `objeto_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -112,13 +100,11 @@ CREATE TABLE IF NOT EXISTS `Produccion` (
 -- Estructura de tabla para la tabla `Usuarios`
 --
 
-DROP TABLE IF EXISTS `Usuarios`;
-CREATE TABLE IF NOT EXISTS `Usuarios` (
+CREATE TABLE `Usuarios` (
   `usuario` varchar(50) NOT NULL,
   `clave` varchar(300) NOT NULL,
   `permisos` varchar(50) NOT NULL,
-  `departamento` varchar(50) NOT NULL,
-  PRIMARY KEY (`usuario`)
+  `departamento` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
@@ -139,15 +125,102 @@ INSERT INTO `Usuarios` (`usuario`, `clave`, `permisos`, `departamento`) VALUES
 -- Estructura de tabla para la tabla `ventas`
 --
 
-DROP TABLE IF EXISTS `ventas`;
-CREATE TABLE IF NOT EXISTS `ventas` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `ventas` (
+  `id` int(11) NOT NULL,
   `descripcion` varchar(250) NOT NULL,
   `estado` varchar(50) NOT NULL,
-  `empresa` varchar(100) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `FK_empresas_ventas` (`empresa`)
+  `empresa` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Índices para tablas volcadas
+--
+
+--
+-- Indices de la tabla `compras`
+--
+ALTER TABLE `compras`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `FK_empresas` (`empresa`);
+
+--
+-- Indices de la tabla `Empresas`
+--
+ALTER TABLE `Empresas`
+  ADD PRIMARY KEY (`empresa`);
+
+--
+-- Indices de la tabla `materia_objetos`
+--
+ALTER TABLE `materia_objetos`
+  ADD KEY `FK_Objetos` (`objeto_id`),
+  ADD KEY `FK_materia` (`materia_id`);
+
+--
+-- Indices de la tabla `materia_prima`
+--
+ALTER TABLE `materia_prima`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `objetos`
+--
+ALTER TABLE `objetos`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `Produccion`
+--
+ALTER TABLE `Produccion`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `FK_objetos_produccion` (`objeto_id`);
+
+--
+-- Indices de la tabla `Usuarios`
+--
+ALTER TABLE `Usuarios`
+  ADD PRIMARY KEY (`usuario`);
+
+--
+-- Indices de la tabla `ventas`
+--
+ALTER TABLE `ventas`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `FK_empresas_ventas` (`empresa`);
+
+--
+-- AUTO_INCREMENT de las tablas volcadas
+--
+
+--
+-- AUTO_INCREMENT de la tabla `compras`
+--
+ALTER TABLE `compras`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `materia_prima`
+--
+ALTER TABLE `materia_prima`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `objetos`
+--
+ALTER TABLE `objetos`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `Produccion`
+--
+ALTER TABLE `Produccion`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `ventas`
+--
+ALTER TABLE `ventas`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Restricciones para tablas volcadas
@@ -160,14 +233,23 @@ ALTER TABLE `compras`
   ADD CONSTRAINT `FK_empresas` FOREIGN KEY (`empresa`) REFERENCES `Empresas` (`empresa`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
+-- Filtros para la tabla `materia_objetos`
+--
+ALTER TABLE `materia_objetos`
+  ADD CONSTRAINT `FK_Objetos` FOREIGN KEY (`objeto_id`) REFERENCES `objetos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_materia` FOREIGN KEY (`materia_id`) REFERENCES `materia_prima` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `Produccion`
+--
+ALTER TABLE `Produccion`
+  ADD CONSTRAINT `FK_objetos_produccion` FOREIGN KEY (`objeto_id`) REFERENCES `objetos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Filtros para la tabla `ventas`
 --
 ALTER TABLE `ventas`
   ADD CONSTRAINT `FK_empresas_ventas` FOREIGN KEY (`empresa`) REFERENCES `Empresas` (`empresa`) ON DELETE CASCADE ON UPDATE CASCADE;
-COMMIT;
-
-ALTER TABLE `objetos` AUTO_INCREMENT = 1;
-	
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
